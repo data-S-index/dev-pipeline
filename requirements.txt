@@ -1,0 +1,28 @@
+# Do not include azure-functions-worker in this file
+# The Python Worker is managed by the Azure Functions platform
+# Manually managing azure-functions-worker may cause unexpected issues
+
+# Core
+jsonschema
+pandas
+xmltodict
+colorama
+termcolor
+pillow
+tqdm
+
+# Environment
+python-dotenv
+
+# Formatters
+black
+isort
+
+# Linters
+flake8
+mypy
+pylint
+pydocstyle
+
+# Database
+psycopg2-binary
