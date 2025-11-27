@@ -37,7 +37,7 @@ jobs:
 
             - name: Start FUJI API containers
               run: |
-                  docker-compose up -d
+                  docker compose up -d
                   echo "Waiting for FUJI API containers to be ready..."
                   sleep 10  # Give containers time to start
 
@@ -85,7 +85,7 @@ jobs:
             - name: Stop FUJI containers
               if: always()
               run: |
-                  docker-compose down
+                  docker compose down
 
             - name: Cleanup Docker resources
               if: always()
