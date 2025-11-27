@@ -118,7 +118,7 @@ def score_row(
     """
     dataset_id, doi = row
 
-    print(f"Scoring dataset {dataset_id} with DOI {doi}")
+   
 
     # Retry logic for API calls
     for attempt in range(MAX_RETRIES):
