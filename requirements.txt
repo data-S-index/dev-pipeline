@@ -3,6 +3,7 @@
 # Manually managing azure-functions-worker may cause unexpected issues
 
 # Core
+requests
 jsonschema
 pandas
 xmltodict
@@ -27,3 +28,7 @@ pydocstyle
 
 # Database
 psycopg[binary]
+
+# jupyter
+jupyter
+ipython
