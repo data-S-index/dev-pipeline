@@ -3,15 +3,13 @@
 import json
 import random
 from datetime import datetime
-from multiprocessing import Pool, cpu_count
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from tqdm import tqdm
 
 
-RECORDS_PER_FILE = 1000  # 10k records per file
-NUM_WORKERS = cpu_count()  # Use all available CPU cores
+RECORDS_PER_FILE = 1000  # Records per output file
 
 
 def clean_string(s: Optional[str]) -> str:
@@ -52,7 +50,23 @@ def parse_datacite_record(record: Dict[str, Any], dataset_id: int) -> Dict[str, 
             published_at = None
 
     random_int = random.randint(0, 999999)
-    subjects = record.get("subjects", [])
+
+    # Clean subjects
+    subjects_raw = record.get("subjects", [])
+    subjects = []
+    if subjects_raw:
+        for subject in subjects_raw:
+            if isinstance(subject, str):
+                cleaned_subject = clean_string(subject)
+                if cleaned_subject:  # Only add non-empty subjects
+                    subjects.append(cleaned_subject)
+            elif isinstance(subject, dict):
+                # Handle subject objects (e.g., {"subject": "value"})
+                subject_value = subject.get("subject") or subject.get("value")
+                if subject_value and isinstance(subject_value, str):
+                    cleaned_subject = clean_string(subject_value)
+                    if cleaned_subject:
+                        subjects.append(cleaned_subject)
 
     # Clean authors JSON string
     authors_raw = record.get("creators", [])
@@ -105,109 +119,84 @@ def write_batch_to_file(
         json.dump(batch, f, indent=False, ensure_ascii=False)
 
 
-def process_single_file(
-    args: Tuple[Path, Path],
-) -> Tuple[List[Dict[str, Any]], int, int]:
-    """Process a single ndjson file and return processed records and stats.
-
-    Returns:
-        Tuple of (processed_records, records_processed, records_skipped)
-    """
-    file_path, source_dir = args
-    full_path = source_dir / file_path
-
-    processed_records: List[Dict[str, Any]] = []
-    records_processed = 0
-    records_skipped = 0
-
-    try:
-        with open(full_path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-
-                try:
-                    record = json.loads(line)
-                    # Use temporary ID 0, will be reassigned sequentially later
-                    processed_dataset = parse_datacite_record(record, 0)
-                    processed_records.append(processed_dataset)
-                    records_processed += 1
-                except (json.JSONDecodeError, KeyError, TypeError):
-                    records_skipped += 1
-                    # Note: Can't use tqdm.write in worker process, will log after
-    except FileNotFoundError:
-        pass  # Will be handled in main process
-    except Exception:
-        pass  # Will be handled in main process
-
-    return processed_records, records_processed, records_skipped
-
-
 def process_all_files(
     ndjson_files: List[Path], source_dir: Path, output_dir: Path, total_lines: int
 ) -> None:
-    """Process all ndjson files in parallel and create new JSON files with processed records."""
-    # Prepare arguments for parallel processing
-    process_args = [(file_path, source_dir) for file_path in ndjson_files]
+    """Process all ndjson files and create new JSON files with processed records."""
+    dataset_id = 1
+    file_number = 1
+    current_batch: List[str] = []  # Store raw lines until we have enough
+    total_records_processed = 0
+    total_records_skipped = 0
 
     # Create progress bar for overall processing
     pbar = tqdm(total=total_lines, desc="  Processing", unit="record", unit_scale=True)
 
-    # Process files in parallel
-    all_processed_records: List[Dict[str, Any]] = []
-    total_records_processed = 0
-    total_records_skipped = 0
-    errors: List[str] = []
+    # Process files sequentially
+    for file_path in ndjson_files:
+        file_name = file_path.name
+        full_path = source_dir / file_path
 
-    with Pool(processes=NUM_WORKERS) as pool:
-        # Process files in parallel
-        results = pool.imap(process_single_file, process_args)
+        try:
+            with open(full_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
 
-        for idx, (processed_records, records_processed, records_skipped) in enumerate(
-            results
-        ):
-            file_path = ndjson_files[idx]
-            file_name = file_path.name
+                    # Add raw line to batch
+                    current_batch.append(line)
+                    pbar.update(1)
 
-            all_processed_records.extend(processed_records)
-            total_records_processed += records_processed
-            total_records_skipped += records_skipped
+                    # When batch reaches RECORDS_PER_FILE, process and write
+                    if len(current_batch) >= RECORDS_PER_FILE:
+                        processed_batch = []
+                        for raw_line in current_batch:
+                            try:
+                                record = json.loads(raw_line)
+                                processed_dataset = parse_datacite_record(
+                                    record, dataset_id
+                                )
+                                processed_batch.append(processed_dataset)
+                                dataset_id += 1
+                                total_records_processed += 1
+                            except (json.JSONDecodeError, KeyError, TypeError) as error:
+                                dataset_id += 1
+                                total_records_skipped += 1
+                                tqdm.write(
+                                    f"    ⚠️  Failed to parse line in {file_name}: {error}"
+                                )
 
-            pbar.update(records_processed + records_skipped)
+                        # Write the processed batch
+                        write_batch_to_file(processed_batch, file_number, output_dir)
+                        file_number += 1
+                        current_batch = []
 
-            # Check for file errors
-            full_path = source_dir / file_path
-            if not full_path.exists():
-                errors.append(f"    ⚠️  File not found: {full_path}")
-            elif records_processed == 0 and records_skipped == 0:
-                errors.append(f"    ⚠️  No records processed from: {file_name}")
+        except FileNotFoundError:
+            tqdm.write(f"    ⚠️  File not found: {full_path}")
+            continue
+        except Exception as error:
+            tqdm.write(f"    ⚠️  Error reading {file_name}: {error}")
+            continue
 
     pbar.close()
 
-    # Print any errors
-    for error in errors:
-        print(error)
-
-    # Assign sequential dataset IDs starting from 1
-    print("  Assigning sequential dataset IDs...")
-    for idx, record in enumerate(all_processed_records, start=1):
-        record["id"] = idx
-
-    # Write records in batches
-    file_number = 1
-    current_batch: List[Dict[str, Any]] = []
-
-    for record in all_processed_records:
-        current_batch.append(record)
-        if len(current_batch) >= RECORDS_PER_FILE:
-            write_batch_to_file(current_batch, file_number, output_dir)
-            file_number += 1
-            current_batch = []
-
-    # Write any remaining records as the final file
+    # Process and write any remaining records as the final file
     if current_batch:
-        write_batch_to_file(current_batch, file_number, output_dir)
+        processed_batch = []
+        for raw_line in current_batch:
+            try:
+                record = json.loads(raw_line)
+                processed_dataset = parse_datacite_record(record, dataset_id)
+                processed_batch.append(processed_dataset)
+                dataset_id += 1
+                total_records_processed += 1
+            except (json.JSONDecodeError, KeyError, TypeError) as error:
+                dataset_id += 1
+                total_records_skipped += 1
+                tqdm.write(f"    ⚠️  Failed to parse line: {error}")
+
+        write_batch_to_file(processed_batch, file_number, output_dir)
 
     print(f"\n  📊 Total records processed: {total_records_processed:,}")
     if total_records_skipped > 0:
@@ -220,14 +209,14 @@ def main() -> None:
     print("🚀 Starting database preparation process...")
 
     source_folder_name = "datacite-slim-records"
-    output_folder_name = "database"
+    output_folder_name = "dataset"
 
     # Step 1: Get OS-agnostic path to Downloads/datacite-slim-records
     print("📍 Step 1: Locating source directory...")
     home_dir = Path.home()
     downloads_dir = home_dir / "Downloads"
     source_dir = downloads_dir / source_folder_name
-    output_dir = downloads_dir / output_folder_name
+    output_dir = downloads_dir / "database" / output_folder_name
 
     print(f"Reading ndjson files from: {source_dir}")
     print(f"Output directory: {output_dir}")
@@ -272,7 +261,6 @@ def main() -> None:
         f"\n✂️  Step 4: Processing files and creating new files "
         f"(~{RECORDS_PER_FILE:,} records each)..."
     )
-    print(f"  Using {NUM_WORKERS} worker process(es) for parallel processing")
 
     process_all_files(ndjson_files, source_dir, output_dir, total_lines)
 

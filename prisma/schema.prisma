@@ -1,0 +1,133 @@
+generator client {
+    provider        = "prisma-client"
+    previewFeatures = ["strictUndefinedChecks", "fullTextSearchPostgres"]
+    output          = "../shared/generated/"
+    engineType      = "client"
+}
+
+// generator kysely {
+//   provider = "prisma-kysely"
+
+//   output   = "../types"
+//   fileName = "kysely.ts"
+// }
+
+datasource db {
+    provider = "postgresql"
+}
+
+model User {
+    id String @id @default(ulid())
+
+    givenName  String @default("") // first name
+    familyName String @default("") // last name
+
+    emailAddress String @unique
+    password     String
+
+    emailVerified                 Boolean   @default(false)
+    emailVerifiedAt               DateTime?
+    emailVerificationToken        String?   @unique
+    emailVerificationTokenExpires DateTime?
+
+    created DateTime @default(now())
+    updated DateTime @updatedAt
+
+    userDatasets UserDataset[]
+
+    @@index([emailAddress])
+}
+
+model Dataset {
+    id  Int    @id @default(autoincrement())
+    doi String @unique
+
+    title       String
+    description String?
+    version     String?
+
+    publisher   String?
+    publishedAt DateTime
+
+    authors String @default("[]") // A stringified version of the authors array for full text search : [{ nameType: String?, name: String, affiliations: String[], nameIdentifiers: string[]}]
+
+    domain   String?
+    subjects String[]
+
+    randomInt Int @default(0) // a field to touch when data in a related table is updated - For sorting by last updated
+
+    created DateTime @default(now())
+    updated DateTime @updatedAt
+
+    Citation  Citation[]
+    Mention   Mention[]
+    FujiScore FujiScore?
+
+    datasetClaims UserDataset[]
+
+    @@index([doi])
+}
+
+model UserDataset {
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String
+
+    dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+    datasetId Int
+
+    created DateTime @default(now())
+    updated DateTime @updatedAt
+
+    @@id([userId, datasetId])
+}
+
+model Citation {
+    id String @id @default(cuid(2))
+
+    dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+    datasetId Int
+
+    citationLink String
+
+    datacite Boolean @default(false)
+    mdc      Boolean @default(false)
+    openAlex Boolean @default(false)
+
+    citedDate      DateTime?
+    citationWeight Float     @default(1.0) // The weight of the citation (1.0 = 100% of the citation impact)
+
+    created DateTime @default(now())
+    updated DateTime @updatedAt
+}
+
+model FujiScore {
+    id String @id @default(cuid(2))
+
+    dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+    datasetId Int     @unique
+
+    score          Float    @default(0.0) // 0.0-100.0
+    evaluationDate DateTime
+
+    metricVersion   String
+    softwareVersion String
+
+    created DateTime @default(now())
+    updated DateTime @updatedAt
+}
+
+model Mention {
+    id String @id @default(cuid(2))
+
+    dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+    datasetId Int
+
+    link   String
+    source String // github, linkedin, twitter, etc.
+
+    mentionedDate DateTime?
+    mentionWeight Float     @default(1.0) // The weight of the mention (1.0 = 100% of the mention impact)
+
+    created DateTime @default(now())
+    updated DateTime @updatedAt
+}

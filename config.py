@@ -25,4 +25,5 @@ def get_env(key, optional=False):
     return environ.get(key)
 
 
-DATABASE_URL = get_env("DATABASE_URL", optional=False)
+DATABASE_URL = get_env("DATABASE_URL", optional=True)
+MINI_DATABASE_URL = get_env("MINI_DATABASE_URL", optional=True)

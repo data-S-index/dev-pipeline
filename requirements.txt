@@ -10,6 +10,7 @@ colorama
 termcolor
 pillow
 tqdm
+cuid2
 
 # Environment
 python-dotenv
@@ -25,4 +26,4 @@ pylint
 pydocstyle
 
 # Database
-psycopg2-binary
+psycopg[binary]
