@@ -7,8 +7,8 @@ from datetime import datetime
 from typing import Optional, Tuple
 
 import psycopg
+from psycopg import pool
 import requests
-from tqdm import tqdm
 
 from config import MINI_DATABASE_URL
 
@@ -50,6 +50,12 @@ BATCH_SIZE = 100
 # Retry configuration
 MAX_RETRIES = 3
 RETRY_DELAY = 2  # seconds
+DB_RETRY_DELAY = 1  # seconds for database retries
+MAX_DB_RETRIES = 5  # Maximum retries for database operations
+
+# Connection pool configuration
+CONNECTION_POOL_MIN = 5
+CONNECTION_POOL_MAX = 30
 
 
 def get_fuji_score_and_date(
@@ -102,8 +108,56 @@ def get_fuji_score_and_date(
     return score, evaluation_date
 
 
+def update_database_with_retry(
+    connection_pool: pool.ConnectionPool,
+    dataset_id: int,
+    score: Optional[float],
+    evaluation_date: datetime,
+) -> Tuple[bool, Optional[str]]:
+    """
+    Update database with retry logic for connection failures.
+
+    Args:
+        connection_pool: Database connection pool
+        dataset_id: Dataset ID to update
+        score: Fuji score to set
+        evaluation_date: Evaluation date to set
+
+    Returns:
+        Tuple of (success, error_message)
+    """
+    for db_attempt in range(MAX_DB_RETRIES):
+        try:
+            with connection_pool.connection() as conn:
+                with conn.cursor() as cur:
+                    # Update the Dataset table directly
+                    cur.execute(
+                        """
+                        UPDATE "Dataset"
+                        SET score = %s, "evaluationdate" = %s
+                        WHERE id = %s
+                        """,
+                        (score, evaluation_date, dataset_id),
+                    )
+                conn.commit()
+            return (True, None)
+        except psycopg.OperationalError as e:
+            # Connection errors - retry with backoff
+            if db_attempt < MAX_DB_RETRIES - 1:
+                time.sleep(DB_RETRY_DELAY * (db_attempt + 1))
+                continue
+            return (False, f"Database connection error: {str(e)}")
+        except psycopg.Error as e:
+            # Other database errors - don't retry
+            return (False, f"Database error: {str(e)}")
+        except Exception as e:
+            return (False, f"Unexpected database error: {str(e)}")
+
+    return (False, "Max database retries exceeded")
+
+
 def score_row(
-    row: Tuple[int, str], endpoint: str, database_url: str
+    row: Tuple[int, str], endpoint: str, connection_pool: pool.ConnectionPool
 ) -> Tuple[int, bool, Optional[str]]:
     """
     Score a single dataset row by calling the FUJI API.
@@ -111,14 +165,12 @@ def score_row(
     Args:
         row: Tuple of (dataset_id, doi)
         endpoint: FUJI API endpoint URL
-        database_url: Database connection string
+        connection_pool: Database connection pool
 
     Returns:
         Tuple of (dataset_id, success, error_message)
     """
     dataset_id, doi = row
-
-   
 
     # Retry logic for API calls
     for attempt in range(MAX_RETRIES):
@@ -143,30 +195,29 @@ def score_row(
             if evaluation_date is None:
                 evaluation_date = datetime.now()
 
-            # Update database with new connection (thread-safe)
-            with psycopg.connect(database_url, autocommit=False) as conn:
-                with conn.cursor() as cur:
-                    # Update the Dataset table directly
-                    cur.execute(
-                        """
-                        UPDATE "Dataset"
-                        SET score = %s, "evaluationdate" = %s
-                        WHERE id = %s
-                        """,
-                        (score, evaluation_date, dataset_id),
-                    )
-                conn.commit()
+            # Update database with retry logic
+            success, error = update_database_with_retry(
+                connection_pool, dataset_id, score, evaluation_date
+            )
 
-            return (dataset_id, True, None)
+            if success:
+                return (dataset_id, True, None)
+            else:
+                # If database update fails, retry the whole operation
+                if attempt < MAX_RETRIES - 1:
+                    time.sleep(RETRY_DELAY * (attempt + 1))
+                    continue
+                return (dataset_id, False, error)
 
         except requests.exceptions.RequestException as e:
             if attempt < MAX_RETRIES - 1:
                 time.sleep(RETRY_DELAY * (attempt + 1))  # Exponential backoff
                 continue
             return (dataset_id, False, f"API error: {str(e)}")
-        except psycopg.Error as e:
-            return (dataset_id, False, f"Database error: {str(e)}")
         except Exception as e:
+            if attempt < MAX_RETRIES - 1:
+                time.sleep(RETRY_DELAY * (attempt + 1))
+                continue
             return (dataset_id, False, f"Unexpected error: {str(e)}")
 
     return (dataset_id, False, "Max retries exceeded")
@@ -201,11 +252,30 @@ def main() -> None:
     if not MINI_DATABASE_URL:
         raise ValueError("MINI_DATABASE_URL not set in environment or .env file")
 
-    # Connect to database
-    print("\n🔌 Connecting to database...")
+    # Create connection pool
+    print("\n🔌 Creating database connection pool...")
     try:
-        with psycopg.connect(MINI_DATABASE_URL, autocommit=False) as conn:
-            print("  ✅ Connected to database")
+        # Create connection pool with keepalive settings
+        connection_pool = pool.ConnectionPool(
+            MINI_DATABASE_URL,
+            min_size=CONNECTION_POOL_MIN,
+            max_size=CONNECTION_POOL_MAX,
+            kwargs={
+                "autocommit": False,
+                "connect_timeout": 10,
+                "keepalives": 1,
+                "keepalives_idle": 30,
+                "keepalives_interval": 10,
+                "keepalives_count": 5,
+            },
+        )
+        print(
+            f"  ✅ Connection pool created (min={CONNECTION_POOL_MIN}, max={CONNECTION_POOL_MAX})"
+        )
+
+        # Test connection
+        with connection_pool.connection() as conn:
+            print("  ✅ Database connection test successful")
 
             # Check how many datasets need scoring
             with conn.cursor() as cur:
@@ -220,53 +290,77 @@ def main() -> None:
 
             if total_pending == 0:
                 print("\n✅ All datasets already have Fuji scores!")
+                connection_pool.close()
                 return
 
             print(f"  📊 Found {total_pending:,} datasets without Fuji scores")
 
-            # Process in batches
-            total_processed = 0
-            total_succeeded = 0
-            total_failed = 0
+        # Process in batches using a single persistent connection for fetching
+        # and the connection pool for worker thread updates
+        total_processed = 0
+        total_succeeded = 0
+        total_failed = 0
 
-            with tqdm(total=total_pending, desc="Processing", unit="dataset") as pbar:
-                while True:
-                    # Get next batch of datasets
-                    rows = get_datasets_without_scores(conn, BATCH_SIZE)
+        # Use a single connection for batch fetching (more efficient than getting from pool each time)
+        with connection_pool.connection() as fetch_conn:
+            last_progress_print = 0
+            progress_print_interval = 100  # Print progress every 100 datasets
 
-                    if not rows:
-                        break
+            while True:
+                # Get next batch of datasets using the persistent connection
+                rows = get_datasets_without_scores(fetch_conn, BATCH_SIZE)
 
-                    # Process batch with thread pool
-                    with ThreadPoolExecutor(max_workers=len(FUJI_ENDPOINTS)) as pool:
-                        futures = {
-                            pool.submit(
-                                score_row,
-                                row,
-                                FUJI_ENDPOINTS[i % len(FUJI_ENDPOINTS)],
-                                MINI_DATABASE_URL,
-                            ): row
-                            for i, row in enumerate(rows)
-                        }
+                if not rows:
+                    break
 
-                        # Process completed futures
-                        for future in as_completed(futures):
-                            dataset_id, success, error = future.result()
-                            total_processed += 1
+                # Process batch with thread pool
+                with ThreadPoolExecutor(max_workers=len(FUJI_ENDPOINTS)) as executor:
+                    futures = {
+                        executor.submit(
+                            score_row,
+                            row,
+                            FUJI_ENDPOINTS[i % len(FUJI_ENDPOINTS)],
+                            connection_pool,
+                        ): row
+                        for i, row in enumerate(rows)
+                    }
 
-                            if success:
-                                total_succeeded += 1
-                            else:
-                                total_failed += 1
-                                tqdm.write(f"  ⚠️  Failed dataset {dataset_id}: {error}")
+                    # Process completed futures
+                    for future in as_completed(futures):
+                        dataset_id, success, error = future.result()
+                        total_processed += 1
 
-                            pbar.update(1)
+                        if success:
+                            total_succeeded += 1
+                        else:
+                            total_failed += 1
+                            print(f"  ⚠️  Failed dataset {dataset_id}: {error}")
 
-            print("\n✅ Fuji score database fill completed!")
-            print("📊 Summary:")
-            print(f"  - Total processed: {total_processed:,}")
-            print(f"  - Succeeded: {total_succeeded:,}")
-            print(f"  - Failed: {total_failed:,}")
+                        # Print progress periodically
+                        if (
+                            total_processed - last_progress_print
+                            >= progress_print_interval
+                        ):
+                            progress_pct = (
+                                (total_processed / total_pending * 100)
+                                if total_pending > 0
+                                else 0
+                            )
+                            print(
+                                f"  📊 Progress: {total_processed:,}/{total_pending:,} "
+                                f"({progress_pct:.1f}%) - "
+                                f"Succeeded: {total_succeeded:,}, Failed: {total_failed:,}"
+                            )
+                            last_progress_print = total_processed
+
+        print("\n✅ Fuji score database fill completed!")
+        print("📊 Summary:")
+        print(f"  - Total processed: {total_processed:,}")
+        print(f"  - Succeeded: {total_succeeded:,}")
+        print(f"  - Failed: {total_failed:,}")
+
+        # Close connection pool
+        connection_pool.close()
 
     except psycopg.Error as e:
         print(f"\n❌ Database error: {e}")
