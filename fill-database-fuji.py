@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Optional, Tuple
 
 import psycopg
-from psycopg import pool
+from psycopg_pool import ConnectionPool
 import requests
 
 from config import MINI_DATABASE_URL
@@ -44,8 +44,8 @@ HEADERS = {
     "Content-Type": "application/json",
 }
 
-# Batch size for processing
-BATCH_SIZE = 100
+# Batch size for processing - one query per FUJI instance at a time
+BATCH_SIZE = INSTANCE_COUNT
 
 # Retry configuration
 MAX_RETRIES = 3
@@ -54,8 +54,9 @@ DB_RETRY_DELAY = 1  # seconds for database retries
 MAX_DB_RETRIES = 5  # Maximum retries for database operations
 
 # Connection pool configuration
-CONNECTION_POOL_MIN = 5
-CONNECTION_POOL_MAX = 30
+# Lowered to allow multiple instances to run concurrently without exhausting DB connections
+CONNECTION_POOL_MIN = 2
+CONNECTION_POOL_MAX = 10
 
 
 def get_fuji_score_and_date(
@@ -109,7 +110,7 @@ def get_fuji_score_and_date(
 
 
 def update_database_with_retry(
-    connection_pool: pool.ConnectionPool,
+    connection_pool: ConnectionPool,
     dataset_id: int,
     score: Optional[float],
     evaluation_date: datetime,
@@ -157,7 +158,7 @@ def update_database_with_retry(
 
 
 def score_row(
-    row: Tuple[int, str], endpoint: str, connection_pool: pool.ConnectionPool
+    row: Tuple[int, str], endpoint: str, connection_pool: ConnectionPool
 ) -> Tuple[int, bool, Optional[str]]:
     """
     Score a single dataset row by calling the FUJI API.
@@ -227,6 +228,15 @@ def get_datasets_without_scores(conn: psycopg.Connection, limit: int) -> list:
     """
     Query for datasets that don't have a score (score IS NULL).
 
+    Note: We intentionally do NOT use FOR UPDATE SKIP LOCKED here because:
+    - This script runs as a single instance (no multi-process concurrency)
+    - Row-level locking would cause deadlocks: fetch_conn would hold locks,
+      but worker threads use different connections from the pool to update rows,
+      causing them to block waiting for locks that are never released until
+      the end of the batch
+    - We already protect against duplicate processing by only selecting rows
+      where score IS NULL, and setting score once processed
+
     Returns:
         List of tuples (dataset_id, doi)
     """
@@ -237,7 +247,6 @@ def get_datasets_without_scores(conn: psycopg.Connection, limit: int) -> list:
             FROM "Dataset"
             WHERE score IS NULL
             LIMIT %s
-            FOR UPDATE SKIP LOCKED
             """,
             (limit,),
         )
@@ -256,7 +265,7 @@ def main() -> None:
     print("\n🔌 Creating database connection pool...")
     try:
         # Create connection pool with keepalive settings
-        connection_pool = pool.ConnectionPool(
+        connection_pool = ConnectionPool(
             MINI_DATABASE_URL,
             min_size=CONNECTION_POOL_MIN,
             max_size=CONNECTION_POOL_MAX,

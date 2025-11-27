@@ -28,6 +28,7 @@ pydocstyle
 
 # Database
 psycopg[binary]
+psycopg-pool
 
 # jupyter
 jupyter
