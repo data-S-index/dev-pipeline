@@ -4,6 +4,7 @@
 
 # Core
 requests
+httpx
 jsonschema
 pandas
 xmltodict
