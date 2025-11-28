@@ -210,3 +210,44 @@ services:
     ports:
       - "54030:1071"
     restart: unless-stopped
+
+  fill-database-fuji:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fill-database-fuji
+    environment:
+      - MINI_DATABASE_URL=${MINI_DATABASE_URL}
+      - FUJI_HOST=docker
+    depends_on:
+      - fuji1
+      - fuji2
+      - fuji3
+      - fuji4
+      - fuji5
+      - fuji6
+      - fuji7
+      - fuji8
+      - fuji9
+      - fuji10
+      - fuji11
+      - fuji12
+      - fuji13
+      - fuji14
+      - fuji15
+      - fuji16
+      - fuji17
+      - fuji18
+      - fuji19
+      - fuji20
+      - fuji21
+      - fuji22
+      - fuji23
+      - fuji24
+      - fuji25
+      - fuji26
+      - fuji27
+      - fuji28
+      - fuji29
+      - fuji30
+    restart: unless-stopped

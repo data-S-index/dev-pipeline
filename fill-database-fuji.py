@@ -2,6 +2,7 @@
 
 import asyncio
 import base64
+import os
 import time
 from datetime import datetime
 from typing import Optional, Tuple
@@ -37,14 +38,37 @@ WHERE score IS NULL
 ON CONFLICT (dataset_id) DO NOTHING;
 """
 
-# Generate a list of ports from 54001 to 54010
+# Generate a list of ports from 54001 to 54030
 MIN_PORT = 54001
 INSTANCE_COUNT = 30
 PORTS = list(range(MIN_PORT, MIN_PORT + INSTANCE_COUNT))
 
-print(PORTS)
+# Allow FUJI endpoints to be configured via environment variable
+# Default to localhost for local development
+# In Docker, set FUJI_HOST=docker to use service names (fuji1, fuji2, etc.)
+FUJI_HOST = os.getenv("FUJI_HOST", "localhost")
+FUJI_PORT = os.getenv(
+    "FUJI_PORT", None
+)  # If set, use this port; otherwise use PORTS list
 
-FUJI_ENDPOINTS = [f"http://localhost:{port}/fuji/api/v1/evaluate" for port in PORTS]
+if FUJI_PORT:
+    # Single endpoint mode (useful when FUJI_PORT is explicitly set)
+    FUJI_ENDPOINTS = [f"http://{FUJI_HOST}:{FUJI_PORT}/fuji/api/v1/evaluate"]
+    INSTANCE_COUNT = 1
+elif FUJI_HOST == "docker":
+    # Docker mode: use service names (fuji1, fuji2, etc.) with internal port 1071
+    FUJI_ENDPOINTS = [
+        f"http://fuji{i+1}:1071/fuji/api/v1/evaluate" for i in range(INSTANCE_COUNT)
+    ]
+else:
+    # Local development mode: use localhost with external ports
+    FUJI_ENDPOINTS = [f"http://localhost:{port}/fuji/api/v1/evaluate" for port in PORTS]
+
+print(f"Using {len(FUJI_ENDPOINTS)} FUJI endpoint(s)")
+if len(FUJI_ENDPOINTS) <= 5:
+    print(f"Endpoints: {FUJI_ENDPOINTS}")
+else:
+    print(f"First 3 endpoints: {FUJI_ENDPOINTS[:3]}...")
 
 # Default credentials for the FUJI API
 USERNAME = "marvel"
