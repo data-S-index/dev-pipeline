@@ -1,3 +1,13 @@
+import argparse
+
+parser = argparse.ArgumentParser(
+    description="Generate docker-compose file with specified number of fuji services"
+)
+parser.add_argument("number", type=int, help="Number of fuji services to generate")
+args = parser.parse_args()
+
+number = args.number
+
 services = "".join(
     [
         f"""  fuji{i}:
@@ -8,11 +18,11 @@ services = "".join(
     restart: unless-stopped
 
 """
-        for i in range(1, 121)
+        for i in range(1, number + 1)
     ]
 )
 
-depends = "".join([f"      - fuji{i}\n" for i in range(1, 121)])
+depends = "".join([f"      - fuji{i}\n" for i in range(1, number + 1)])
 
 content = f"""version: "3.9"
 
@@ -29,7 +39,8 @@ services:
 {depends}    restart: unless-stopped
 """
 
-with open("docker-compose-120.yml", "w", encoding="utf-8") as f:
+output_filename = f"docker-compose-{number}.yml"
+with open(output_filename, "w", encoding="utf-8") as f:
     f.write(content)
 
-print("File docker-compose-120.yml created successfully!")
+print(f"File {output_filename} created successfully!")
