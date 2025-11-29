@@ -11,7 +11,7 @@ import httpx
 import psycopg
 from psycopg_pool import ConnectionPool
 
-from config import MINI_DATABASE_URL
+from config import MINI_DATABASE_URL, INSTANCE_COUNT
 
 
 """
@@ -40,7 +40,6 @@ ON CONFLICT (dataset_id) DO NOTHING;
 
 # Generate a list of ports from 54001 to 54030
 MIN_PORT = 54001
-INSTANCE_COUNT = 30
 PORTS = list(range(MIN_PORT, MIN_PORT + INSTANCE_COUNT))
 
 # Allow FUJI endpoints to be configured via environment variable

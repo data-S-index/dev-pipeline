@@ -1,0 +1,4 @@
+fuji-vm-1
+fuji-vm-2
+mimas-remote
+bunny-hop

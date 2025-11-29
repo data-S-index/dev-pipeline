@@ -27,3 +27,6 @@ def get_env(key, optional=False):
 
 DATABASE_URL = get_env("DATABASE_URL", optional=True)
 MINI_DATABASE_URL = get_env("MINI_DATABASE_URL", optional=True)
+
+# Instance count for FUJI endpoints (default: 30)
+INSTANCE_COUNT = int(get_env("INSTANCE_COUNT", optional=True) or "30")
