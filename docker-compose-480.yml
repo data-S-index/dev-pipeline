@@ -1,0 +1,3853 @@
+version: "3.9"
+
+services:
+  fuji1:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji1
+    ports:
+      - "54001:1071"
+    restart: unless-stopped
+
+  fuji2:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji2
+    ports:
+      - "54002:1071"
+    restart: unless-stopped
+
+  fuji3:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji3
+    ports:
+      - "54003:1071"
+    restart: unless-stopped
+
+  fuji4:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji4
+    ports:
+      - "54004:1071"
+    restart: unless-stopped
+
+  fuji5:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji5
+    ports:
+      - "54005:1071"
+    restart: unless-stopped
+
+  fuji6:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji6
+    ports:
+      - "54006:1071"
+    restart: unless-stopped
+
+  fuji7:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji7
+    ports:
+      - "54007:1071"
+    restart: unless-stopped
+
+  fuji8:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji8
+    ports:
+      - "54008:1071"
+    restart: unless-stopped
+
+  fuji9:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji9
+    ports:
+      - "54009:1071"
+    restart: unless-stopped
+
+  fuji10:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji10
+    ports:
+      - "54010:1071"
+    restart: unless-stopped
+
+  fuji11:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji11
+    ports:
+      - "54011:1071"
+    restart: unless-stopped
+
+  fuji12:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji12
+    ports:
+      - "54012:1071"
+    restart: unless-stopped
+
+  fuji13:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji13
+    ports:
+      - "54013:1071"
+    restart: unless-stopped
+
+  fuji14:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji14
+    ports:
+      - "54014:1071"
+    restart: unless-stopped
+
+  fuji15:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji15
+    ports:
+      - "54015:1071"
+    restart: unless-stopped
+
+  fuji16:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji16
+    ports:
+      - "54016:1071"
+    restart: unless-stopped
+
+  fuji17:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji17
+    ports:
+      - "54017:1071"
+    restart: unless-stopped
+
+  fuji18:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji18
+    ports:
+      - "54018:1071"
+    restart: unless-stopped
+
+  fuji19:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji19
+    ports:
+      - "54019:1071"
+    restart: unless-stopped
+
+  fuji20:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji20
+    ports:
+      - "54020:1071"
+    restart: unless-stopped
+
+  fuji21:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji21
+    ports:
+      - "54021:1071"
+    restart: unless-stopped
+
+  fuji22:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji22
+    ports:
+      - "54022:1071"
+    restart: unless-stopped
+
+  fuji23:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji23
+    ports:
+      - "54023:1071"
+    restart: unless-stopped
+
+  fuji24:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji24
+    ports:
+      - "54024:1071"
+    restart: unless-stopped
+
+  fuji25:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji25
+    ports:
+      - "54025:1071"
+    restart: unless-stopped
+
+  fuji26:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji26
+    ports:
+      - "54026:1071"
+    restart: unless-stopped
+
+  fuji27:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji27
+    ports:
+      - "54027:1071"
+    restart: unless-stopped
+
+  fuji28:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji28
+    ports:
+      - "54028:1071"
+    restart: unless-stopped
+
+  fuji29:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji29
+    ports:
+      - "54029:1071"
+    restart: unless-stopped
+
+  fuji30:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji30
+    ports:
+      - "54030:1071"
+    restart: unless-stopped
+
+  fuji31:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji31
+    ports:
+      - "54031:1071"
+    restart: unless-stopped
+
+  fuji32:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji32
+    ports:
+      - "54032:1071"
+    restart: unless-stopped
+
+  fuji33:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji33
+    ports:
+      - "54033:1071"
+    restart: unless-stopped
+
+  fuji34:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji34
+    ports:
+      - "54034:1071"
+    restart: unless-stopped
+
+  fuji35:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji35
+    ports:
+      - "54035:1071"
+    restart: unless-stopped
+
+  fuji36:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji36
+    ports:
+      - "54036:1071"
+    restart: unless-stopped
+
+  fuji37:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji37
+    ports:
+      - "54037:1071"
+    restart: unless-stopped
+
+  fuji38:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji38
+    ports:
+      - "54038:1071"
+    restart: unless-stopped
+
+  fuji39:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji39
+    ports:
+      - "54039:1071"
+    restart: unless-stopped
+
+  fuji40:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji40
+    ports:
+      - "54040:1071"
+    restart: unless-stopped
+
+  fuji41:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji41
+    ports:
+      - "54041:1071"
+    restart: unless-stopped
+
+  fuji42:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji42
+    ports:
+      - "54042:1071"
+    restart: unless-stopped
+
+  fuji43:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji43
+    ports:
+      - "54043:1071"
+    restart: unless-stopped
+
+  fuji44:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji44
+    ports:
+      - "54044:1071"
+    restart: unless-stopped
+
+  fuji45:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji45
+    ports:
+      - "54045:1071"
+    restart: unless-stopped
+
+  fuji46:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji46
+    ports:
+      - "54046:1071"
+    restart: unless-stopped
+
+  fuji47:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji47
+    ports:
+      - "54047:1071"
+    restart: unless-stopped
+
+  fuji48:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji48
+    ports:
+      - "54048:1071"
+    restart: unless-stopped
+
+  fuji49:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji49
+    ports:
+      - "54049:1071"
+    restart: unless-stopped
+
+  fuji50:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji50
+    ports:
+      - "54050:1071"
+    restart: unless-stopped
+
+  fuji51:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji51
+    ports:
+      - "54051:1071"
+    restart: unless-stopped
+
+  fuji52:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji52
+    ports:
+      - "54052:1071"
+    restart: unless-stopped
+
+  fuji53:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji53
+    ports:
+      - "54053:1071"
+    restart: unless-stopped
+
+  fuji54:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji54
+    ports:
+      - "54054:1071"
+    restart: unless-stopped
+
+  fuji55:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji55
+    ports:
+      - "54055:1071"
+    restart: unless-stopped
+
+  fuji56:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji56
+    ports:
+      - "54056:1071"
+    restart: unless-stopped
+
+  fuji57:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji57
+    ports:
+      - "54057:1071"
+    restart: unless-stopped
+
+  fuji58:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji58
+    ports:
+      - "54058:1071"
+    restart: unless-stopped
+
+  fuji59:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji59
+    ports:
+      - "54059:1071"
+    restart: unless-stopped
+
+  fuji60:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji60
+    ports:
+      - "54060:1071"
+    restart: unless-stopped
+
+  fuji61:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji61
+    ports:
+      - "54061:1071"
+    restart: unless-stopped
+
+  fuji62:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji62
+    ports:
+      - "54062:1071"
+    restart: unless-stopped
+
+  fuji63:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji63
+    ports:
+      - "54063:1071"
+    restart: unless-stopped
+
+  fuji64:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji64
+    ports:
+      - "54064:1071"
+    restart: unless-stopped
+
+  fuji65:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji65
+    ports:
+      - "54065:1071"
+    restart: unless-stopped
+
+  fuji66:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji66
+    ports:
+      - "54066:1071"
+    restart: unless-stopped
+
+  fuji67:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji67
+    ports:
+      - "54067:1071"
+    restart: unless-stopped
+
+  fuji68:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji68
+    ports:
+      - "54068:1071"
+    restart: unless-stopped
+
+  fuji69:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji69
+    ports:
+      - "54069:1071"
+    restart: unless-stopped
+
+  fuji70:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji70
+    ports:
+      - "54070:1071"
+    restart: unless-stopped
+
+  fuji71:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji71
+    ports:
+      - "54071:1071"
+    restart: unless-stopped
+
+  fuji72:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji72
+    ports:
+      - "54072:1071"
+    restart: unless-stopped
+
+  fuji73:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji73
+    ports:
+      - "54073:1071"
+    restart: unless-stopped
+
+  fuji74:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji74
+    ports:
+      - "54074:1071"
+    restart: unless-stopped
+
+  fuji75:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji75
+    ports:
+      - "54075:1071"
+    restart: unless-stopped
+
+  fuji76:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji76
+    ports:
+      - "54076:1071"
+    restart: unless-stopped
+
+  fuji77:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji77
+    ports:
+      - "54077:1071"
+    restart: unless-stopped
+
+  fuji78:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji78
+    ports:
+      - "54078:1071"
+    restart: unless-stopped
+
+  fuji79:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji79
+    ports:
+      - "54079:1071"
+    restart: unless-stopped
+
+  fuji80:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji80
+    ports:
+      - "54080:1071"
+    restart: unless-stopped
+
+  fuji81:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji81
+    ports:
+      - "54081:1071"
+    restart: unless-stopped
+
+  fuji82:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji82
+    ports:
+      - "54082:1071"
+    restart: unless-stopped
+
+  fuji83:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji83
+    ports:
+      - "54083:1071"
+    restart: unless-stopped
+
+  fuji84:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji84
+    ports:
+      - "54084:1071"
+    restart: unless-stopped
+
+  fuji85:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji85
+    ports:
+      - "54085:1071"
+    restart: unless-stopped
+
+  fuji86:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji86
+    ports:
+      - "54086:1071"
+    restart: unless-stopped
+
+  fuji87:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji87
+    ports:
+      - "54087:1071"
+    restart: unless-stopped
+
+  fuji88:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji88
+    ports:
+      - "54088:1071"
+    restart: unless-stopped
+
+  fuji89:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji89
+    ports:
+      - "54089:1071"
+    restart: unless-stopped
+
+  fuji90:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji90
+    ports:
+      - "54090:1071"
+    restart: unless-stopped
+
+  fuji91:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji91
+    ports:
+      - "54091:1071"
+    restart: unless-stopped
+
+  fuji92:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji92
+    ports:
+      - "54092:1071"
+    restart: unless-stopped
+
+  fuji93:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji93
+    ports:
+      - "54093:1071"
+    restart: unless-stopped
+
+  fuji94:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji94
+    ports:
+      - "54094:1071"
+    restart: unless-stopped
+
+  fuji95:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji95
+    ports:
+      - "54095:1071"
+    restart: unless-stopped
+
+  fuji96:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji96
+    ports:
+      - "54096:1071"
+    restart: unless-stopped
+
+  fuji97:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji97
+    ports:
+      - "54097:1071"
+    restart: unless-stopped
+
+  fuji98:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji98
+    ports:
+      - "54098:1071"
+    restart: unless-stopped
+
+  fuji99:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji99
+    ports:
+      - "54099:1071"
+    restart: unless-stopped
+
+  fuji100:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji100
+    ports:
+      - "54100:1071"
+    restart: unless-stopped
+
+  fuji101:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji101
+    ports:
+      - "54101:1071"
+    restart: unless-stopped
+
+  fuji102:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji102
+    ports:
+      - "54102:1071"
+    restart: unless-stopped
+
+  fuji103:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji103
+    ports:
+      - "54103:1071"
+    restart: unless-stopped
+
+  fuji104:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji104
+    ports:
+      - "54104:1071"
+    restart: unless-stopped
+
+  fuji105:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji105
+    ports:
+      - "54105:1071"
+    restart: unless-stopped
+
+  fuji106:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji106
+    ports:
+      - "54106:1071"
+    restart: unless-stopped
+
+  fuji107:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji107
+    ports:
+      - "54107:1071"
+    restart: unless-stopped
+
+  fuji108:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji108
+    ports:
+      - "54108:1071"
+    restart: unless-stopped
+
+  fuji109:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji109
+    ports:
+      - "54109:1071"
+    restart: unless-stopped
+
+  fuji110:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji110
+    ports:
+      - "54110:1071"
+    restart: unless-stopped
+
+  fuji111:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji111
+    ports:
+      - "54111:1071"
+    restart: unless-stopped
+
+  fuji112:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji112
+    ports:
+      - "54112:1071"
+    restart: unless-stopped
+
+  fuji113:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji113
+    ports:
+      - "54113:1071"
+    restart: unless-stopped
+
+  fuji114:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji114
+    ports:
+      - "54114:1071"
+    restart: unless-stopped
+
+  fuji115:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji115
+    ports:
+      - "54115:1071"
+    restart: unless-stopped
+
+  fuji116:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji116
+    ports:
+      - "54116:1071"
+    restart: unless-stopped
+
+  fuji117:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji117
+    ports:
+      - "54117:1071"
+    restart: unless-stopped
+
+  fuji118:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji118
+    ports:
+      - "54118:1071"
+    restart: unless-stopped
+
+  fuji119:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji119
+    ports:
+      - "54119:1071"
+    restart: unless-stopped
+
+  fuji120:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji120
+    ports:
+      - "54120:1071"
+    restart: unless-stopped
+
+  fuji121:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji121
+    ports:
+      - "54121:1071"
+    restart: unless-stopped
+
+  fuji122:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji122
+    ports:
+      - "54122:1071"
+    restart: unless-stopped
+
+  fuji123:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji123
+    ports:
+      - "54123:1071"
+    restart: unless-stopped
+
+  fuji124:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji124
+    ports:
+      - "54124:1071"
+    restart: unless-stopped
+
+  fuji125:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji125
+    ports:
+      - "54125:1071"
+    restart: unless-stopped
+
+  fuji126:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji126
+    ports:
+      - "54126:1071"
+    restart: unless-stopped
+
+  fuji127:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji127
+    ports:
+      - "54127:1071"
+    restart: unless-stopped
+
+  fuji128:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji128
+    ports:
+      - "54128:1071"
+    restart: unless-stopped
+
+  fuji129:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji129
+    ports:
+      - "54129:1071"
+    restart: unless-stopped
+
+  fuji130:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji130
+    ports:
+      - "54130:1071"
+    restart: unless-stopped
+
+  fuji131:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji131
+    ports:
+      - "54131:1071"
+    restart: unless-stopped
+
+  fuji132:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji132
+    ports:
+      - "54132:1071"
+    restart: unless-stopped
+
+  fuji133:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji133
+    ports:
+      - "54133:1071"
+    restart: unless-stopped
+
+  fuji134:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji134
+    ports:
+      - "54134:1071"
+    restart: unless-stopped
+
+  fuji135:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji135
+    ports:
+      - "54135:1071"
+    restart: unless-stopped
+
+  fuji136:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji136
+    ports:
+      - "54136:1071"
+    restart: unless-stopped
+
+  fuji137:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji137
+    ports:
+      - "54137:1071"
+    restart: unless-stopped
+
+  fuji138:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji138
+    ports:
+      - "54138:1071"
+    restart: unless-stopped
+
+  fuji139:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji139
+    ports:
+      - "54139:1071"
+    restart: unless-stopped
+
+  fuji140:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji140
+    ports:
+      - "54140:1071"
+    restart: unless-stopped
+
+  fuji141:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji141
+    ports:
+      - "54141:1071"
+    restart: unless-stopped
+
+  fuji142:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji142
+    ports:
+      - "54142:1071"
+    restart: unless-stopped
+
+  fuji143:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji143
+    ports:
+      - "54143:1071"
+    restart: unless-stopped
+
+  fuji144:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji144
+    ports:
+      - "54144:1071"
+    restart: unless-stopped
+
+  fuji145:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji145
+    ports:
+      - "54145:1071"
+    restart: unless-stopped
+
+  fuji146:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji146
+    ports:
+      - "54146:1071"
+    restart: unless-stopped
+
+  fuji147:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji147
+    ports:
+      - "54147:1071"
+    restart: unless-stopped
+
+  fuji148:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji148
+    ports:
+      - "54148:1071"
+    restart: unless-stopped
+
+  fuji149:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji149
+    ports:
+      - "54149:1071"
+    restart: unless-stopped
+
+  fuji150:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji150
+    ports:
+      - "54150:1071"
+    restart: unless-stopped
+
+  fuji151:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji151
+    ports:
+      - "54151:1071"
+    restart: unless-stopped
+
+  fuji152:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji152
+    ports:
+      - "54152:1071"
+    restart: unless-stopped
+
+  fuji153:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji153
+    ports:
+      - "54153:1071"
+    restart: unless-stopped
+
+  fuji154:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji154
+    ports:
+      - "54154:1071"
+    restart: unless-stopped
+
+  fuji155:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji155
+    ports:
+      - "54155:1071"
+    restart: unless-stopped
+
+  fuji156:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji156
+    ports:
+      - "54156:1071"
+    restart: unless-stopped
+
+  fuji157:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji157
+    ports:
+      - "54157:1071"
+    restart: unless-stopped
+
+  fuji158:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji158
+    ports:
+      - "54158:1071"
+    restart: unless-stopped
+
+  fuji159:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji159
+    ports:
+      - "54159:1071"
+    restart: unless-stopped
+
+  fuji160:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji160
+    ports:
+      - "54160:1071"
+    restart: unless-stopped
+
+  fuji161:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji161
+    ports:
+      - "54161:1071"
+    restart: unless-stopped
+
+  fuji162:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji162
+    ports:
+      - "54162:1071"
+    restart: unless-stopped
+
+  fuji163:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji163
+    ports:
+      - "54163:1071"
+    restart: unless-stopped
+
+  fuji164:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji164
+    ports:
+      - "54164:1071"
+    restart: unless-stopped
+
+  fuji165:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji165
+    ports:
+      - "54165:1071"
+    restart: unless-stopped
+
+  fuji166:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji166
+    ports:
+      - "54166:1071"
+    restart: unless-stopped
+
+  fuji167:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji167
+    ports:
+      - "54167:1071"
+    restart: unless-stopped
+
+  fuji168:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji168
+    ports:
+      - "54168:1071"
+    restart: unless-stopped
+
+  fuji169:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji169
+    ports:
+      - "54169:1071"
+    restart: unless-stopped
+
+  fuji170:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji170
+    ports:
+      - "54170:1071"
+    restart: unless-stopped
+
+  fuji171:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji171
+    ports:
+      - "54171:1071"
+    restart: unless-stopped
+
+  fuji172:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji172
+    ports:
+      - "54172:1071"
+    restart: unless-stopped
+
+  fuji173:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji173
+    ports:
+      - "54173:1071"
+    restart: unless-stopped
+
+  fuji174:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji174
+    ports:
+      - "54174:1071"
+    restart: unless-stopped
+
+  fuji175:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji175
+    ports:
+      - "54175:1071"
+    restart: unless-stopped
+
+  fuji176:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji176
+    ports:
+      - "54176:1071"
+    restart: unless-stopped
+
+  fuji177:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji177
+    ports:
+      - "54177:1071"
+    restart: unless-stopped
+
+  fuji178:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji178
+    ports:
+      - "54178:1071"
+    restart: unless-stopped
+
+  fuji179:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji179
+    ports:
+      - "54179:1071"
+    restart: unless-stopped
+
+  fuji180:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji180
+    ports:
+      - "54180:1071"
+    restart: unless-stopped
+
+  fuji181:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji181
+    ports:
+      - "54181:1071"
+    restart: unless-stopped
+
+  fuji182:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji182
+    ports:
+      - "54182:1071"
+    restart: unless-stopped
+
+  fuji183:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji183
+    ports:
+      - "54183:1071"
+    restart: unless-stopped
+
+  fuji184:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji184
+    ports:
+      - "54184:1071"
+    restart: unless-stopped
+
+  fuji185:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji185
+    ports:
+      - "54185:1071"
+    restart: unless-stopped
+
+  fuji186:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji186
+    ports:
+      - "54186:1071"
+    restart: unless-stopped
+
+  fuji187:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji187
+    ports:
+      - "54187:1071"
+    restart: unless-stopped
+
+  fuji188:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji188
+    ports:
+      - "54188:1071"
+    restart: unless-stopped
+
+  fuji189:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji189
+    ports:
+      - "54189:1071"
+    restart: unless-stopped
+
+  fuji190:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji190
+    ports:
+      - "54190:1071"
+    restart: unless-stopped
+
+  fuji191:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji191
+    ports:
+      - "54191:1071"
+    restart: unless-stopped
+
+  fuji192:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji192
+    ports:
+      - "54192:1071"
+    restart: unless-stopped
+
+  fuji193:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji193
+    ports:
+      - "54193:1071"
+    restart: unless-stopped
+
+  fuji194:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji194
+    ports:
+      - "54194:1071"
+    restart: unless-stopped
+
+  fuji195:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji195
+    ports:
+      - "54195:1071"
+    restart: unless-stopped
+
+  fuji196:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji196
+    ports:
+      - "54196:1071"
+    restart: unless-stopped
+
+  fuji197:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji197
+    ports:
+      - "54197:1071"
+    restart: unless-stopped
+
+  fuji198:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji198
+    ports:
+      - "54198:1071"
+    restart: unless-stopped
+
+  fuji199:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji199
+    ports:
+      - "54199:1071"
+    restart: unless-stopped
+
+  fuji200:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji200
+    ports:
+      - "54200:1071"
+    restart: unless-stopped
+
+  fuji201:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji201
+    ports:
+      - "54201:1071"
+    restart: unless-stopped
+
+  fuji202:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji202
+    ports:
+      - "54202:1071"
+    restart: unless-stopped
+
+  fuji203:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji203
+    ports:
+      - "54203:1071"
+    restart: unless-stopped
+
+  fuji204:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji204
+    ports:
+      - "54204:1071"
+    restart: unless-stopped
+
+  fuji205:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji205
+    ports:
+      - "54205:1071"
+    restart: unless-stopped
+
+  fuji206:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji206
+    ports:
+      - "54206:1071"
+    restart: unless-stopped
+
+  fuji207:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji207
+    ports:
+      - "54207:1071"
+    restart: unless-stopped
+
+  fuji208:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji208
+    ports:
+      - "54208:1071"
+    restart: unless-stopped
+
+  fuji209:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji209
+    ports:
+      - "54209:1071"
+    restart: unless-stopped
+
+  fuji210:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji210
+    ports:
+      - "54210:1071"
+    restart: unless-stopped
+
+  fuji211:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji211
+    ports:
+      - "54211:1071"
+    restart: unless-stopped
+
+  fuji212:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji212
+    ports:
+      - "54212:1071"
+    restart: unless-stopped
+
+  fuji213:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji213
+    ports:
+      - "54213:1071"
+    restart: unless-stopped
+
+  fuji214:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji214
+    ports:
+      - "54214:1071"
+    restart: unless-stopped
+
+  fuji215:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji215
+    ports:
+      - "54215:1071"
+    restart: unless-stopped
+
+  fuji216:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji216
+    ports:
+      - "54216:1071"
+    restart: unless-stopped
+
+  fuji217:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji217
+    ports:
+      - "54217:1071"
+    restart: unless-stopped
+
+  fuji218:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji218
+    ports:
+      - "54218:1071"
+    restart: unless-stopped
+
+  fuji219:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji219
+    ports:
+      - "54219:1071"
+    restart: unless-stopped
+
+  fuji220:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji220
+    ports:
+      - "54220:1071"
+    restart: unless-stopped
+
+  fuji221:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji221
+    ports:
+      - "54221:1071"
+    restart: unless-stopped
+
+  fuji222:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji222
+    ports:
+      - "54222:1071"
+    restart: unless-stopped
+
+  fuji223:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji223
+    ports:
+      - "54223:1071"
+    restart: unless-stopped
+
+  fuji224:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji224
+    ports:
+      - "54224:1071"
+    restart: unless-stopped
+
+  fuji225:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji225
+    ports:
+      - "54225:1071"
+    restart: unless-stopped
+
+  fuji226:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji226
+    ports:
+      - "54226:1071"
+    restart: unless-stopped
+
+  fuji227:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji227
+    ports:
+      - "54227:1071"
+    restart: unless-stopped
+
+  fuji228:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji228
+    ports:
+      - "54228:1071"
+    restart: unless-stopped
+
+  fuji229:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji229
+    ports:
+      - "54229:1071"
+    restart: unless-stopped
+
+  fuji230:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji230
+    ports:
+      - "54230:1071"
+    restart: unless-stopped
+
+  fuji231:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji231
+    ports:
+      - "54231:1071"
+    restart: unless-stopped
+
+  fuji232:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji232
+    ports:
+      - "54232:1071"
+    restart: unless-stopped
+
+  fuji233:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji233
+    ports:
+      - "54233:1071"
+    restart: unless-stopped
+
+  fuji234:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji234
+    ports:
+      - "54234:1071"
+    restart: unless-stopped
+
+  fuji235:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji235
+    ports:
+      - "54235:1071"
+    restart: unless-stopped
+
+  fuji236:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji236
+    ports:
+      - "54236:1071"
+    restart: unless-stopped
+
+  fuji237:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji237
+    ports:
+      - "54237:1071"
+    restart: unless-stopped
+
+  fuji238:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji238
+    ports:
+      - "54238:1071"
+    restart: unless-stopped
+
+  fuji239:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji239
+    ports:
+      - "54239:1071"
+    restart: unless-stopped
+
+  fuji240:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji240
+    ports:
+      - "54240:1071"
+    restart: unless-stopped
+
+  fuji241:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji241
+    ports:
+      - "54241:1071"
+    restart: unless-stopped
+
+  fuji242:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji242
+    ports:
+      - "54242:1071"
+    restart: unless-stopped
+
+  fuji243:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji243
+    ports:
+      - "54243:1071"
+    restart: unless-stopped
+
+  fuji244:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji244
+    ports:
+      - "54244:1071"
+    restart: unless-stopped
+
+  fuji245:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji245
+    ports:
+      - "54245:1071"
+    restart: unless-stopped
+
+  fuji246:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji246
+    ports:
+      - "54246:1071"
+    restart: unless-stopped
+
+  fuji247:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji247
+    ports:
+      - "54247:1071"
+    restart: unless-stopped
+
+  fuji248:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji248
+    ports:
+      - "54248:1071"
+    restart: unless-stopped
+
+  fuji249:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji249
+    ports:
+      - "54249:1071"
+    restart: unless-stopped
+
+  fuji250:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji250
+    ports:
+      - "54250:1071"
+    restart: unless-stopped
+
+  fuji251:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji251
+    ports:
+      - "54251:1071"
+    restart: unless-stopped
+
+  fuji252:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji252
+    ports:
+      - "54252:1071"
+    restart: unless-stopped
+
+  fuji253:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji253
+    ports:
+      - "54253:1071"
+    restart: unless-stopped
+
+  fuji254:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji254
+    ports:
+      - "54254:1071"
+    restart: unless-stopped
+
+  fuji255:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji255
+    ports:
+      - "54255:1071"
+    restart: unless-stopped
+
+  fuji256:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji256
+    ports:
+      - "54256:1071"
+    restart: unless-stopped
+
+  fuji257:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji257
+    ports:
+      - "54257:1071"
+    restart: unless-stopped
+
+  fuji258:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji258
+    ports:
+      - "54258:1071"
+    restart: unless-stopped
+
+  fuji259:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji259
+    ports:
+      - "54259:1071"
+    restart: unless-stopped
+
+  fuji260:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji260
+    ports:
+      - "54260:1071"
+    restart: unless-stopped
+
+  fuji261:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji261
+    ports:
+      - "54261:1071"
+    restart: unless-stopped
+
+  fuji262:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji262
+    ports:
+      - "54262:1071"
+    restart: unless-stopped
+
+  fuji263:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji263
+    ports:
+      - "54263:1071"
+    restart: unless-stopped
+
+  fuji264:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji264
+    ports:
+      - "54264:1071"
+    restart: unless-stopped
+
+  fuji265:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji265
+    ports:
+      - "54265:1071"
+    restart: unless-stopped
+
+  fuji266:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji266
+    ports:
+      - "54266:1071"
+    restart: unless-stopped
+
+  fuji267:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji267
+    ports:
+      - "54267:1071"
+    restart: unless-stopped
+
+  fuji268:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji268
+    ports:
+      - "54268:1071"
+    restart: unless-stopped
+
+  fuji269:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji269
+    ports:
+      - "54269:1071"
+    restart: unless-stopped
+
+  fuji270:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji270
+    ports:
+      - "54270:1071"
+    restart: unless-stopped
+
+  fuji271:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji271
+    ports:
+      - "54271:1071"
+    restart: unless-stopped
+
+  fuji272:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji272
+    ports:
+      - "54272:1071"
+    restart: unless-stopped
+
+  fuji273:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji273
+    ports:
+      - "54273:1071"
+    restart: unless-stopped
+
+  fuji274:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji274
+    ports:
+      - "54274:1071"
+    restart: unless-stopped
+
+  fuji275:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji275
+    ports:
+      - "54275:1071"
+    restart: unless-stopped
+
+  fuji276:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji276
+    ports:
+      - "54276:1071"
+    restart: unless-stopped
+
+  fuji277:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji277
+    ports:
+      - "54277:1071"
+    restart: unless-stopped
+
+  fuji278:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji278
+    ports:
+      - "54278:1071"
+    restart: unless-stopped
+
+  fuji279:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji279
+    ports:
+      - "54279:1071"
+    restart: unless-stopped
+
+  fuji280:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji280
+    ports:
+      - "54280:1071"
+    restart: unless-stopped
+
+  fuji281:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji281
+    ports:
+      - "54281:1071"
+    restart: unless-stopped
+
+  fuji282:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji282
+    ports:
+      - "54282:1071"
+    restart: unless-stopped
+
+  fuji283:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji283
+    ports:
+      - "54283:1071"
+    restart: unless-stopped
+
+  fuji284:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji284
+    ports:
+      - "54284:1071"
+    restart: unless-stopped
+
+  fuji285:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji285
+    ports:
+      - "54285:1071"
+    restart: unless-stopped
+
+  fuji286:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji286
+    ports:
+      - "54286:1071"
+    restart: unless-stopped
+
+  fuji287:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji287
+    ports:
+      - "54287:1071"
+    restart: unless-stopped
+
+  fuji288:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji288
+    ports:
+      - "54288:1071"
+    restart: unless-stopped
+
+  fuji289:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji289
+    ports:
+      - "54289:1071"
+    restart: unless-stopped
+
+  fuji290:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji290
+    ports:
+      - "54290:1071"
+    restart: unless-stopped
+
+  fuji291:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji291
+    ports:
+      - "54291:1071"
+    restart: unless-stopped
+
+  fuji292:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji292
+    ports:
+      - "54292:1071"
+    restart: unless-stopped
+
+  fuji293:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji293
+    ports:
+      - "54293:1071"
+    restart: unless-stopped
+
+  fuji294:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji294
+    ports:
+      - "54294:1071"
+    restart: unless-stopped
+
+  fuji295:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji295
+    ports:
+      - "54295:1071"
+    restart: unless-stopped
+
+  fuji296:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji296
+    ports:
+      - "54296:1071"
+    restart: unless-stopped
+
+  fuji297:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji297
+    ports:
+      - "54297:1071"
+    restart: unless-stopped
+
+  fuji298:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji298
+    ports:
+      - "54298:1071"
+    restart: unless-stopped
+
+  fuji299:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji299
+    ports:
+      - "54299:1071"
+    restart: unless-stopped
+
+  fuji300:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji300
+    ports:
+      - "54300:1071"
+    restart: unless-stopped
+
+  fuji301:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji301
+    ports:
+      - "54301:1071"
+    restart: unless-stopped
+
+  fuji302:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji302
+    ports:
+      - "54302:1071"
+    restart: unless-stopped
+
+  fuji303:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji303
+    ports:
+      - "54303:1071"
+    restart: unless-stopped
+
+  fuji304:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji304
+    ports:
+      - "54304:1071"
+    restart: unless-stopped
+
+  fuji305:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji305
+    ports:
+      - "54305:1071"
+    restart: unless-stopped
+
+  fuji306:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji306
+    ports:
+      - "54306:1071"
+    restart: unless-stopped
+
+  fuji307:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji307
+    ports:
+      - "54307:1071"
+    restart: unless-stopped
+
+  fuji308:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji308
+    ports:
+      - "54308:1071"
+    restart: unless-stopped
+
+  fuji309:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji309
+    ports:
+      - "54309:1071"
+    restart: unless-stopped
+
+  fuji310:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji310
+    ports:
+      - "54310:1071"
+    restart: unless-stopped
+
+  fuji311:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji311
+    ports:
+      - "54311:1071"
+    restart: unless-stopped
+
+  fuji312:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji312
+    ports:
+      - "54312:1071"
+    restart: unless-stopped
+
+  fuji313:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji313
+    ports:
+      - "54313:1071"
+    restart: unless-stopped
+
+  fuji314:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji314
+    ports:
+      - "54314:1071"
+    restart: unless-stopped
+
+  fuji315:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji315
+    ports:
+      - "54315:1071"
+    restart: unless-stopped
+
+  fuji316:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji316
+    ports:
+      - "54316:1071"
+    restart: unless-stopped
+
+  fuji317:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji317
+    ports:
+      - "54317:1071"
+    restart: unless-stopped
+
+  fuji318:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji318
+    ports:
+      - "54318:1071"
+    restart: unless-stopped
+
+  fuji319:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji319
+    ports:
+      - "54319:1071"
+    restart: unless-stopped
+
+  fuji320:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji320
+    ports:
+      - "54320:1071"
+    restart: unless-stopped
+
+  fuji321:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji321
+    ports:
+      - "54321:1071"
+    restart: unless-stopped
+
+  fuji322:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji322
+    ports:
+      - "54322:1071"
+    restart: unless-stopped
+
+  fuji323:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji323
+    ports:
+      - "54323:1071"
+    restart: unless-stopped
+
+  fuji324:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji324
+    ports:
+      - "54324:1071"
+    restart: unless-stopped
+
+  fuji325:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji325
+    ports:
+      - "54325:1071"
+    restart: unless-stopped
+
+  fuji326:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji326
+    ports:
+      - "54326:1071"
+    restart: unless-stopped
+
+  fuji327:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji327
+    ports:
+      - "54327:1071"
+    restart: unless-stopped
+
+  fuji328:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji328
+    ports:
+      - "54328:1071"
+    restart: unless-stopped
+
+  fuji329:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji329
+    ports:
+      - "54329:1071"
+    restart: unless-stopped
+
+  fuji330:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji330
+    ports:
+      - "54330:1071"
+    restart: unless-stopped
+
+  fuji331:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji331
+    ports:
+      - "54331:1071"
+    restart: unless-stopped
+
+  fuji332:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji332
+    ports:
+      - "54332:1071"
+    restart: unless-stopped
+
+  fuji333:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji333
+    ports:
+      - "54333:1071"
+    restart: unless-stopped
+
+  fuji334:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji334
+    ports:
+      - "54334:1071"
+    restart: unless-stopped
+
+  fuji335:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji335
+    ports:
+      - "54335:1071"
+    restart: unless-stopped
+
+  fuji336:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji336
+    ports:
+      - "54336:1071"
+    restart: unless-stopped
+
+  fuji337:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji337
+    ports:
+      - "54337:1071"
+    restart: unless-stopped
+
+  fuji338:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji338
+    ports:
+      - "54338:1071"
+    restart: unless-stopped
+
+  fuji339:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji339
+    ports:
+      - "54339:1071"
+    restart: unless-stopped
+
+  fuji340:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji340
+    ports:
+      - "54340:1071"
+    restart: unless-stopped
+
+  fuji341:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji341
+    ports:
+      - "54341:1071"
+    restart: unless-stopped
+
+  fuji342:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji342
+    ports:
+      - "54342:1071"
+    restart: unless-stopped
+
+  fuji343:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji343
+    ports:
+      - "54343:1071"
+    restart: unless-stopped
+
+  fuji344:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji344
+    ports:
+      - "54344:1071"
+    restart: unless-stopped
+
+  fuji345:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji345
+    ports:
+      - "54345:1071"
+    restart: unless-stopped
+
+  fuji346:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji346
+    ports:
+      - "54346:1071"
+    restart: unless-stopped
+
+  fuji347:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji347
+    ports:
+      - "54347:1071"
+    restart: unless-stopped
+
+  fuji348:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji348
+    ports:
+      - "54348:1071"
+    restart: unless-stopped
+
+  fuji349:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji349
+    ports:
+      - "54349:1071"
+    restart: unless-stopped
+
+  fuji350:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji350
+    ports:
+      - "54350:1071"
+    restart: unless-stopped
+
+  fuji351:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji351
+    ports:
+      - "54351:1071"
+    restart: unless-stopped
+
+  fuji352:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji352
+    ports:
+      - "54352:1071"
+    restart: unless-stopped
+
+  fuji353:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji353
+    ports:
+      - "54353:1071"
+    restart: unless-stopped
+
+  fuji354:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji354
+    ports:
+      - "54354:1071"
+    restart: unless-stopped
+
+  fuji355:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji355
+    ports:
+      - "54355:1071"
+    restart: unless-stopped
+
+  fuji356:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji356
+    ports:
+      - "54356:1071"
+    restart: unless-stopped
+
+  fuji357:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji357
+    ports:
+      - "54357:1071"
+    restart: unless-stopped
+
+  fuji358:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji358
+    ports:
+      - "54358:1071"
+    restart: unless-stopped
+
+  fuji359:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji359
+    ports:
+      - "54359:1071"
+    restart: unless-stopped
+
+  fuji360:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji360
+    ports:
+      - "54360:1071"
+    restart: unless-stopped
+
+  fuji361:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji361
+    ports:
+      - "54361:1071"
+    restart: unless-stopped
+
+  fuji362:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji362
+    ports:
+      - "54362:1071"
+    restart: unless-stopped
+
+  fuji363:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji363
+    ports:
+      - "54363:1071"
+    restart: unless-stopped
+
+  fuji364:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji364
+    ports:
+      - "54364:1071"
+    restart: unless-stopped
+
+  fuji365:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji365
+    ports:
+      - "54365:1071"
+    restart: unless-stopped
+
+  fuji366:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji366
+    ports:
+      - "54366:1071"
+    restart: unless-stopped
+
+  fuji367:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji367
+    ports:
+      - "54367:1071"
+    restart: unless-stopped
+
+  fuji368:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji368
+    ports:
+      - "54368:1071"
+    restart: unless-stopped
+
+  fuji369:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji369
+    ports:
+      - "54369:1071"
+    restart: unless-stopped
+
+  fuji370:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji370
+    ports:
+      - "54370:1071"
+    restart: unless-stopped
+
+  fuji371:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji371
+    ports:
+      - "54371:1071"
+    restart: unless-stopped
+
+  fuji372:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji372
+    ports:
+      - "54372:1071"
+    restart: unless-stopped
+
+  fuji373:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji373
+    ports:
+      - "54373:1071"
+    restart: unless-stopped
+
+  fuji374:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji374
+    ports:
+      - "54374:1071"
+    restart: unless-stopped
+
+  fuji375:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji375
+    ports:
+      - "54375:1071"
+    restart: unless-stopped
+
+  fuji376:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji376
+    ports:
+      - "54376:1071"
+    restart: unless-stopped
+
+  fuji377:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji377
+    ports:
+      - "54377:1071"
+    restart: unless-stopped
+
+  fuji378:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji378
+    ports:
+      - "54378:1071"
+    restart: unless-stopped
+
+  fuji379:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji379
+    ports:
+      - "54379:1071"
+    restart: unless-stopped
+
+  fuji380:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji380
+    ports:
+      - "54380:1071"
+    restart: unless-stopped
+
+  fuji381:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji381
+    ports:
+      - "54381:1071"
+    restart: unless-stopped
+
+  fuji382:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji382
+    ports:
+      - "54382:1071"
+    restart: unless-stopped
+
+  fuji383:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji383
+    ports:
+      - "54383:1071"
+    restart: unless-stopped
+
+  fuji384:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji384
+    ports:
+      - "54384:1071"
+    restart: unless-stopped
+
+  fuji385:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji385
+    ports:
+      - "54385:1071"
+    restart: unless-stopped
+
+  fuji386:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji386
+    ports:
+      - "54386:1071"
+    restart: unless-stopped
+
+  fuji387:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji387
+    ports:
+      - "54387:1071"
+    restart: unless-stopped
+
+  fuji388:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji388
+    ports:
+      - "54388:1071"
+    restart: unless-stopped
+
+  fuji389:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji389
+    ports:
+      - "54389:1071"
+    restart: unless-stopped
+
+  fuji390:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji390
+    ports:
+      - "54390:1071"
+    restart: unless-stopped
+
+  fuji391:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji391
+    ports:
+      - "54391:1071"
+    restart: unless-stopped
+
+  fuji392:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji392
+    ports:
+      - "54392:1071"
+    restart: unless-stopped
+
+  fuji393:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji393
+    ports:
+      - "54393:1071"
+    restart: unless-stopped
+
+  fuji394:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji394
+    ports:
+      - "54394:1071"
+    restart: unless-stopped
+
+  fuji395:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji395
+    ports:
+      - "54395:1071"
+    restart: unless-stopped
+
+  fuji396:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji396
+    ports:
+      - "54396:1071"
+    restart: unless-stopped
+
+  fuji397:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji397
+    ports:
+      - "54397:1071"
+    restart: unless-stopped
+
+  fuji398:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji398
+    ports:
+      - "54398:1071"
+    restart: unless-stopped
+
+  fuji399:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji399
+    ports:
+      - "54399:1071"
+    restart: unless-stopped
+
+  fuji400:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji400
+    ports:
+      - "54400:1071"
+    restart: unless-stopped
+
+  fuji401:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji401
+    ports:
+      - "54401:1071"
+    restart: unless-stopped
+
+  fuji402:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji402
+    ports:
+      - "54402:1071"
+    restart: unless-stopped
+
+  fuji403:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji403
+    ports:
+      - "54403:1071"
+    restart: unless-stopped
+
+  fuji404:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji404
+    ports:
+      - "54404:1071"
+    restart: unless-stopped
+
+  fuji405:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji405
+    ports:
+      - "54405:1071"
+    restart: unless-stopped
+
+  fuji406:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji406
+    ports:
+      - "54406:1071"
+    restart: unless-stopped
+
+  fuji407:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji407
+    ports:
+      - "54407:1071"
+    restart: unless-stopped
+
+  fuji408:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji408
+    ports:
+      - "54408:1071"
+    restart: unless-stopped
+
+  fuji409:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji409
+    ports:
+      - "54409:1071"
+    restart: unless-stopped
+
+  fuji410:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji410
+    ports:
+      - "54410:1071"
+    restart: unless-stopped
+
+  fuji411:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji411
+    ports:
+      - "54411:1071"
+    restart: unless-stopped
+
+  fuji412:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji412
+    ports:
+      - "54412:1071"
+    restart: unless-stopped
+
+  fuji413:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji413
+    ports:
+      - "54413:1071"
+    restart: unless-stopped
+
+  fuji414:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji414
+    ports:
+      - "54414:1071"
+    restart: unless-stopped
+
+  fuji415:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji415
+    ports:
+      - "54415:1071"
+    restart: unless-stopped
+
+  fuji416:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji416
+    ports:
+      - "54416:1071"
+    restart: unless-stopped
+
+  fuji417:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji417
+    ports:
+      - "54417:1071"
+    restart: unless-stopped
+
+  fuji418:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji418
+    ports:
+      - "54418:1071"
+    restart: unless-stopped
+
+  fuji419:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji419
+    ports:
+      - "54419:1071"
+    restart: unless-stopped
+
+  fuji420:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji420
+    ports:
+      - "54420:1071"
+    restart: unless-stopped
+
+  fuji421:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji421
+    ports:
+      - "54421:1071"
+    restart: unless-stopped
+
+  fuji422:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji422
+    ports:
+      - "54422:1071"
+    restart: unless-stopped
+
+  fuji423:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji423
+    ports:
+      - "54423:1071"
+    restart: unless-stopped
+
+  fuji424:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji424
+    ports:
+      - "54424:1071"
+    restart: unless-stopped
+
+  fuji425:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji425
+    ports:
+      - "54425:1071"
+    restart: unless-stopped
+
+  fuji426:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji426
+    ports:
+      - "54426:1071"
+    restart: unless-stopped
+
+  fuji427:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji427
+    ports:
+      - "54427:1071"
+    restart: unless-stopped
+
+  fuji428:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji428
+    ports:
+      - "54428:1071"
+    restart: unless-stopped
+
+  fuji429:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji429
+    ports:
+      - "54429:1071"
+    restart: unless-stopped
+
+  fuji430:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji430
+    ports:
+      - "54430:1071"
+    restart: unless-stopped
+
+  fuji431:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji431
+    ports:
+      - "54431:1071"
+    restart: unless-stopped
+
+  fuji432:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji432
+    ports:
+      - "54432:1071"
+    restart: unless-stopped
+
+  fuji433:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji433
+    ports:
+      - "54433:1071"
+    restart: unless-stopped
+
+  fuji434:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji434
+    ports:
+      - "54434:1071"
+    restart: unless-stopped
+
+  fuji435:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji435
+    ports:
+      - "54435:1071"
+    restart: unless-stopped
+
+  fuji436:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji436
+    ports:
+      - "54436:1071"
+    restart: unless-stopped
+
+  fuji437:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji437
+    ports:
+      - "54437:1071"
+    restart: unless-stopped
+
+  fuji438:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji438
+    ports:
+      - "54438:1071"
+    restart: unless-stopped
+
+  fuji439:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji439
+    ports:
+      - "54439:1071"
+    restart: unless-stopped
+
+  fuji440:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji440
+    ports:
+      - "54440:1071"
+    restart: unless-stopped
+
+  fuji441:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji441
+    ports:
+      - "54441:1071"
+    restart: unless-stopped
+
+  fuji442:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji442
+    ports:
+      - "54442:1071"
+    restart: unless-stopped
+
+  fuji443:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji443
+    ports:
+      - "54443:1071"
+    restart: unless-stopped
+
+  fuji444:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji444
+    ports:
+      - "54444:1071"
+    restart: unless-stopped
+
+  fuji445:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji445
+    ports:
+      - "54445:1071"
+    restart: unless-stopped
+
+  fuji446:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji446
+    ports:
+      - "54446:1071"
+    restart: unless-stopped
+
+  fuji447:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji447
+    ports:
+      - "54447:1071"
+    restart: unless-stopped
+
+  fuji448:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji448
+    ports:
+      - "54448:1071"
+    restart: unless-stopped
+
+  fuji449:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji449
+    ports:
+      - "54449:1071"
+    restart: unless-stopped
+
+  fuji450:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji450
+    ports:
+      - "54450:1071"
+    restart: unless-stopped
+
+  fuji451:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji451
+    ports:
+      - "54451:1071"
+    restart: unless-stopped
+
+  fuji452:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji452
+    ports:
+      - "54452:1071"
+    restart: unless-stopped
+
+  fuji453:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji453
+    ports:
+      - "54453:1071"
+    restart: unless-stopped
+
+  fuji454:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji454
+    ports:
+      - "54454:1071"
+    restart: unless-stopped
+
+  fuji455:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji455
+    ports:
+      - "54455:1071"
+    restart: unless-stopped
+
+  fuji456:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji456
+    ports:
+      - "54456:1071"
+    restart: unless-stopped
+
+  fuji457:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji457
+    ports:
+      - "54457:1071"
+    restart: unless-stopped
+
+  fuji458:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji458
+    ports:
+      - "54458:1071"
+    restart: unless-stopped
+
+  fuji459:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji459
+    ports:
+      - "54459:1071"
+    restart: unless-stopped
+
+  fuji460:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji460
+    ports:
+      - "54460:1071"
+    restart: unless-stopped
+
+  fuji461:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji461
+    ports:
+      - "54461:1071"
+    restart: unless-stopped
+
+  fuji462:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji462
+    ports:
+      - "54462:1071"
+    restart: unless-stopped
+
+  fuji463:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji463
+    ports:
+      - "54463:1071"
+    restart: unless-stopped
+
+  fuji464:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji464
+    ports:
+      - "54464:1071"
+    restart: unless-stopped
+
+  fuji465:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji465
+    ports:
+      - "54465:1071"
+    restart: unless-stopped
+
+  fuji466:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji466
+    ports:
+      - "54466:1071"
+    restart: unless-stopped
+
+  fuji467:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji467
+    ports:
+      - "54467:1071"
+    restart: unless-stopped
+
+  fuji468:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji468
+    ports:
+      - "54468:1071"
+    restart: unless-stopped
+
+  fuji469:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji469
+    ports:
+      - "54469:1071"
+    restart: unless-stopped
+
+  fuji470:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji470
+    ports:
+      - "54470:1071"
+    restart: unless-stopped
+
+  fuji471:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji471
+    ports:
+      - "54471:1071"
+    restart: unless-stopped
+
+  fuji472:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji472
+    ports:
+      - "54472:1071"
+    restart: unless-stopped
+
+  fuji473:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji473
+    ports:
+      - "54473:1071"
+    restart: unless-stopped
+
+  fuji474:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji474
+    ports:
+      - "54474:1071"
+    restart: unless-stopped
+
+  fuji475:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji475
+    ports:
+      - "54475:1071"
+    restart: unless-stopped
+
+  fuji476:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji476
+    ports:
+      - "54476:1071"
+    restart: unless-stopped
+
+  fuji477:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji477
+    ports:
+      - "54477:1071"
+    restart: unless-stopped
+
+  fuji478:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji478
+    ports:
+      - "54478:1071"
+    restart: unless-stopped
+
+  fuji479:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji479
+    ports:
+      - "54479:1071"
+    restart: unless-stopped
+
+  fuji480:
+    image: ghcr.io/pangaea-data-publisher/fuji:latest
+    container_name: fuji480
+    ports:
+      - "54480:1071"
+    restart: unless-stopped
+
+  fill-database-fuji:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fill-database-fuji
+    environment:
+      - MINI_DATABASE_URL=${MINI_DATABASE_URL}
+      - FUJI_HOST=docker
+    depends_on:
+      - fuji1
+      - fuji2
+      - fuji3
+      - fuji4
+      - fuji5
+      - fuji6
+      - fuji7
+      - fuji8
+      - fuji9
+      - fuji10
+      - fuji11
+      - fuji12
+      - fuji13
+      - fuji14
+      - fuji15
+      - fuji16
+      - fuji17
+      - fuji18
+      - fuji19
+      - fuji20
+      - fuji21
+      - fuji22
+      - fuji23
+      - fuji24
+      - fuji25
+      - fuji26
+      - fuji27
+      - fuji28
+      - fuji29
+      - fuji30
+      - fuji31
+      - fuji32
+      - fuji33
+      - fuji34
+      - fuji35
+      - fuji36
+      - fuji37
+      - fuji38
+      - fuji39
+      - fuji40
+      - fuji41
+      - fuji42
+      - fuji43
+      - fuji44
+      - fuji45
+      - fuji46
+      - fuji47
+      - fuji48
+      - fuji49
+      - fuji50
+      - fuji51
+      - fuji52
+      - fuji53
+      - fuji54
+      - fuji55
+      - fuji56
+      - fuji57
+      - fuji58
+      - fuji59
+      - fuji60
+      - fuji61
+      - fuji62
+      - fuji63
+      - fuji64
+      - fuji65
+      - fuji66
+      - fuji67
+      - fuji68
+      - fuji69
+      - fuji70
+      - fuji71
+      - fuji72
+      - fuji73
+      - fuji74
+      - fuji75
+      - fuji76
+      - fuji77
+      - fuji78
+      - fuji79
+      - fuji80
+      - fuji81
+      - fuji82
+      - fuji83
+      - fuji84
+      - fuji85
+      - fuji86
+      - fuji87
+      - fuji88
+      - fuji89
+      - fuji90
+      - fuji91
+      - fuji92
+      - fuji93
+      - fuji94
+      - fuji95
+      - fuji96
+      - fuji97
+      - fuji98
+      - fuji99
+      - fuji100
+      - fuji101
+      - fuji102
+      - fuji103
+      - fuji104
+      - fuji105
+      - fuji106
+      - fuji107
+      - fuji108
+      - fuji109
+      - fuji110
+      - fuji111
+      - fuji112
+      - fuji113
+      - fuji114
+      - fuji115
+      - fuji116
+      - fuji117
+      - fuji118
+      - fuji119
+      - fuji120
+      - fuji121
+      - fuji122
+      - fuji123
+      - fuji124
+      - fuji125
+      - fuji126
+      - fuji127
+      - fuji128
+      - fuji129
+      - fuji130
+      - fuji131
+      - fuji132
+      - fuji133
+      - fuji134
+      - fuji135
+      - fuji136
+      - fuji137
+      - fuji138
+      - fuji139
+      - fuji140
+      - fuji141
+      - fuji142
+      - fuji143
+      - fuji144
+      - fuji145
+      - fuji146
+      - fuji147
+      - fuji148
+      - fuji149
+      - fuji150
+      - fuji151
+      - fuji152
+      - fuji153
+      - fuji154
+      - fuji155
+      - fuji156
+      - fuji157
+      - fuji158
+      - fuji159
+      - fuji160
+      - fuji161
+      - fuji162
+      - fuji163
+      - fuji164
+      - fuji165
+      - fuji166
+      - fuji167
+      - fuji168
+      - fuji169
+      - fuji170
+      - fuji171
+      - fuji172
+      - fuji173
+      - fuji174
+      - fuji175
+      - fuji176
+      - fuji177
+      - fuji178
+      - fuji179
+      - fuji180
+      - fuji181
+      - fuji182
+      - fuji183
+      - fuji184
+      - fuji185
+      - fuji186
+      - fuji187
+      - fuji188
+      - fuji189
+      - fuji190
+      - fuji191
+      - fuji192
+      - fuji193
+      - fuji194
+      - fuji195
+      - fuji196
+      - fuji197
+      - fuji198
+      - fuji199
+      - fuji200
+      - fuji201
+      - fuji202
+      - fuji203
+      - fuji204
+      - fuji205
+      - fuji206
+      - fuji207
+      - fuji208
+      - fuji209
+      - fuji210
+      - fuji211
+      - fuji212
+      - fuji213
+      - fuji214
+      - fuji215
+      - fuji216
+      - fuji217
+      - fuji218
+      - fuji219
+      - fuji220
+      - fuji221
+      - fuji222
+      - fuji223
+      - fuji224
+      - fuji225
+      - fuji226
+      - fuji227
+      - fuji228
+      - fuji229
+      - fuji230
+      - fuji231
+      - fuji232
+      - fuji233
+      - fuji234
+      - fuji235
+      - fuji236
+      - fuji237
+      - fuji238
+      - fuji239
+      - fuji240
+      - fuji241
+      - fuji242
+      - fuji243
+      - fuji244
+      - fuji245
+      - fuji246
+      - fuji247
+      - fuji248
+      - fuji249
+      - fuji250
+      - fuji251
+      - fuji252
+      - fuji253
+      - fuji254
+      - fuji255
+      - fuji256
+      - fuji257
+      - fuji258
+      - fuji259
+      - fuji260
+      - fuji261
+      - fuji262
+      - fuji263
+      - fuji264
+      - fuji265
+      - fuji266
+      - fuji267
+      - fuji268
+      - fuji269
+      - fuji270
+      - fuji271
+      - fuji272
+      - fuji273
+      - fuji274
+      - fuji275
+      - fuji276
+      - fuji277
+      - fuji278
+      - fuji279
+      - fuji280
+      - fuji281
+      - fuji282
+      - fuji283
+      - fuji284
+      - fuji285
+      - fuji286
+      - fuji287
+      - fuji288
+      - fuji289
+      - fuji290
+      - fuji291
+      - fuji292
+      - fuji293
+      - fuji294
+      - fuji295
+      - fuji296
+      - fuji297
+      - fuji298
+      - fuji299
+      - fuji300
+      - fuji301
+      - fuji302
+      - fuji303
+      - fuji304
+      - fuji305
+      - fuji306
+      - fuji307
+      - fuji308
+      - fuji309
+      - fuji310
+      - fuji311
+      - fuji312
+      - fuji313
+      - fuji314
+      - fuji315
+      - fuji316
+      - fuji317
+      - fuji318
+      - fuji319
+      - fuji320
+      - fuji321
+      - fuji322
+      - fuji323
+      - fuji324
+      - fuji325
+      - fuji326
+      - fuji327
+      - fuji328
+      - fuji329
+      - fuji330
+      - fuji331
+      - fuji332
+      - fuji333
+      - fuji334
+      - fuji335
+      - fuji336
+      - fuji337
+      - fuji338
+      - fuji339
+      - fuji340
+      - fuji341
+      - fuji342
+      - fuji343
+      - fuji344
+      - fuji345
+      - fuji346
+      - fuji347
+      - fuji348
+      - fuji349
+      - fuji350
+      - fuji351
+      - fuji352
+      - fuji353
+      - fuji354
+      - fuji355
+      - fuji356
+      - fuji357
+      - fuji358
+      - fuji359
+      - fuji360
+      - fuji361
+      - fuji362
+      - fuji363
+      - fuji364
+      - fuji365
+      - fuji366
+      - fuji367
+      - fuji368
+      - fuji369
+      - fuji370
+      - fuji371
+      - fuji372
+      - fuji373
+      - fuji374
+      - fuji375
+      - fuji376
+      - fuji377
+      - fuji378
+      - fuji379
+      - fuji380
+      - fuji381
+      - fuji382
+      - fuji383
+      - fuji384
+      - fuji385
+      - fuji386
+      - fuji387
+      - fuji388
+      - fuji389
+      - fuji390
+      - fuji391
+      - fuji392
+      - fuji393
+      - fuji394
+      - fuji395
+      - fuji396
+      - fuji397
+      - fuji398
+      - fuji399
+      - fuji400
+      - fuji401
+      - fuji402
+      - fuji403
+      - fuji404
+      - fuji405
+      - fuji406
+      - fuji407
+      - fuji408
+      - fuji409
+      - fuji410
+      - fuji411
+      - fuji412
+      - fuji413
+      - fuji414
+      - fuji415
+      - fuji416
+      - fuji417
+      - fuji418
+      - fuji419
+      - fuji420
+      - fuji421
+      - fuji422
+      - fuji423
+      - fuji424
+      - fuji425
+      - fuji426
+      - fuji427
+      - fuji428
+      - fuji429
+      - fuji430
+      - fuji431
+      - fuji432
+      - fuji433
+      - fuji434
+      - fuji435
+      - fuji436
+      - fuji437
+      - fuji438
+      - fuji439
+      - fuji440
+      - fuji441
+      - fuji442
+      - fuji443
+      - fuji444
+      - fuji445
+      - fuji446
+      - fuji447
+      - fuji448
+      - fuji449
+      - fuji450
+      - fuji451
+      - fuji452
+      - fuji453
+      - fuji454
+      - fuji455
+      - fuji456
+      - fuji457
+      - fuji458
+      - fuji459
+      - fuji460
+      - fuji461
+      - fuji462
+      - fuji463
+      - fuji464
+      - fuji465
+      - fuji466
+      - fuji467
+      - fuji468
+      - fuji469
+      - fuji470
+      - fuji471
+      - fuji472
+      - fuji473
+      - fuji474
+      - fuji475
+      - fuji476
+      - fuji477
+      - fuji478
+      - fuji479
+      - fuji480
+    restart: unless-stopped
