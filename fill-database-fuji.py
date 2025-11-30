@@ -215,6 +215,9 @@ async def score_row(
 
     # Retry logic for API calls
     for attempt in range(MAX_RETRIES):
+        print(
+            f"Attempt {attempt + 1} of {MAX_RETRIES} for dataset {dataset_id} with DOI {doi} to endpoint {endpoint}"
+        )
         try:
             payload = {
                 "object_identifier": doi,
