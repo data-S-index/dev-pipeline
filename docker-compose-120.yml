@@ -841,134 +841,134 @@ services:
       - "54120:1071"
     restart: unless-stopped
 
-  fill-database-fuji:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: fill-database-fuji
-    environment:
-      - MINI_DATABASE_URL=${MINI_DATABASE_URL}
-      - FUJI_HOST=docker
-      - INSTANCE_COUNT=120
-    depends_on:
-      - fuji1
-      - fuji2
-      - fuji3
-      - fuji4
-      - fuji5
-      - fuji6
-      - fuji7
-      - fuji8
-      - fuji9
-      - fuji10
-      - fuji11
-      - fuji12
-      - fuji13
-      - fuji14
-      - fuji15
-      - fuji16
-      - fuji17
-      - fuji18
-      - fuji19
-      - fuji20
-      - fuji21
-      - fuji22
-      - fuji23
-      - fuji24
-      - fuji25
-      - fuji26
-      - fuji27
-      - fuji28
-      - fuji29
-      - fuji30
-      - fuji31
-      - fuji32
-      - fuji33
-      - fuji34
-      - fuji35
-      - fuji36
-      - fuji37
-      - fuji38
-      - fuji39
-      - fuji40
-      - fuji41
-      - fuji42
-      - fuji43
-      - fuji44
-      - fuji45
-      - fuji46
-      - fuji47
-      - fuji48
-      - fuji49
-      - fuji50
-      - fuji51
-      - fuji52
-      - fuji53
-      - fuji54
-      - fuji55
-      - fuji56
-      - fuji57
-      - fuji58
-      - fuji59
-      - fuji60
-      - fuji61
-      - fuji62
-      - fuji63
-      - fuji64
-      - fuji65
-      - fuji66
-      - fuji67
-      - fuji68
-      - fuji69
-      - fuji70
-      - fuji71
-      - fuji72
-      - fuji73
-      - fuji74
-      - fuji75
-      - fuji76
-      - fuji77
-      - fuji78
-      - fuji79
-      - fuji80
-      - fuji81
-      - fuji82
-      - fuji83
-      - fuji84
-      - fuji85
-      - fuji86
-      - fuji87
-      - fuji88
-      - fuji89
-      - fuji90
-      - fuji91
-      - fuji92
-      - fuji93
-      - fuji94
-      - fuji95
-      - fuji96
-      - fuji97
-      - fuji98
-      - fuji99
-      - fuji100
-      - fuji101
-      - fuji102
-      - fuji103
-      - fuji104
-      - fuji105
-      - fuji106
-      - fuji107
-      - fuji108
-      - fuji109
-      - fuji110
-      - fuji111
-      - fuji112
-      - fuji113
-      - fuji114
-      - fuji115
-      - fuji116
-      - fuji117
-      - fuji118
-      - fuji119
-      - fuji120
-    restart: unless-stopped
+  # fill-database-fuji:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: fill-database-fuji
+  #   environment:
+  #     - MINI_DATABASE_URL=${MINI_DATABASE_URL}
+  #     - FUJI_HOST=docker
+  #     - INSTANCE_COUNT=120
+  #   depends_on:
+  #     - fuji1
+  #     - fuji2
+  #     - fuji3
+  #     - fuji4
+  #     - fuji5
+  #     - fuji6
+  #     - fuji7
+  #     - fuji8
+  #     - fuji9
+  #     - fuji10
+  #     - fuji11
+  #     - fuji12
+  #     - fuji13
+  #     - fuji14
+  #     - fuji15
+  #     - fuji16
+  #     - fuji17
+  #     - fuji18
+  #     - fuji19
+  #     - fuji20
+  #     - fuji21
+  #     - fuji22
+  #     - fuji23
+  #     - fuji24
+  #     - fuji25
+  #     - fuji26
+  #     - fuji27
+  #     - fuji28
+  #     - fuji29
+  #     - fuji30
+  #     - fuji31
+  #     - fuji32
+  #     - fuji33
+  #     - fuji34
+  #     - fuji35
+  #     - fuji36
+  #     - fuji37
+  #     - fuji38
+  #     - fuji39
+  #     - fuji40
+  #     - fuji41
+  #     - fuji42
+  #     - fuji43
+  #     - fuji44
+  #     - fuji45
+  #     - fuji46
+  #     - fuji47
+  #     - fuji48
+  #     - fuji49
+  #     - fuji50
+  #     - fuji51
+  #     - fuji52
+  #     - fuji53
+  #     - fuji54
+  #     - fuji55
+  #     - fuji56
+  #     - fuji57
+  #     - fuji58
+  #     - fuji59
+  #     - fuji60
+  #     - fuji61
+  #     - fuji62
+  #     - fuji63
+  #     - fuji64
+  #     - fuji65
+  #     - fuji66
+  #     - fuji67
+  #     - fuji68
+  #     - fuji69
+  #     - fuji70
+  #     - fuji71
+  #     - fuji72
+  #     - fuji73
+  #     - fuji74
+  #     - fuji75
+  #     - fuji76
+  #     - fuji77
+  #     - fuji78
+  #     - fuji79
+  #     - fuji80
+  #     - fuji81
+  #     - fuji82
+  #     - fuji83
+  #     - fuji84
+  #     - fuji85
+  #     - fuji86
+  #     - fuji87
+  #     - fuji88
+  #     - fuji89
+  #     - fuji90
+  #     - fuji91
+  #     - fuji92
+  #     - fuji93
+  #     - fuji94
+  #     - fuji95
+  #     - fuji96
+  #     - fuji97
+  #     - fuji98
+  #     - fuji99
+  #     - fuji100
+  #     - fuji101
+  #     - fuji102
+  #     - fuji103
+  #     - fuji104
+  #     - fuji105
+  #     - fuji106
+  #     - fuji107
+  #     - fuji108
+  #     - fuji109
+  #     - fuji110
+  #     - fuji111
+  #     - fuji112
+  #     - fuji113
+  #     - fuji114
+  #     - fuji115
+  #     - fuji116
+  #     - fuji117
+  #     - fuji118
+  #     - fuji119
+  #     - fuji120
+  #   restart: unless-stopped

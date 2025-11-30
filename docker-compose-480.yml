@@ -3361,493 +3361,493 @@ services:
       - "54480:1071"
     restart: unless-stopped
 
-  fill-database-fuji:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: fill-database-fuji
-    environment:
-      - MINI_DATABASE_URL=${MINI_DATABASE_URL}
-      - FUJI_HOST=docker
-    depends_on:
-      - fuji1
-      - fuji2
-      - fuji3
-      - fuji4
-      - fuji5
-      - fuji6
-      - fuji7
-      - fuji8
-      - fuji9
-      - fuji10
-      - fuji11
-      - fuji12
-      - fuji13
-      - fuji14
-      - fuji15
-      - fuji16
-      - fuji17
-      - fuji18
-      - fuji19
-      - fuji20
-      - fuji21
-      - fuji22
-      - fuji23
-      - fuji24
-      - fuji25
-      - fuji26
-      - fuji27
-      - fuji28
-      - fuji29
-      - fuji30
-      - fuji31
-      - fuji32
-      - fuji33
-      - fuji34
-      - fuji35
-      - fuji36
-      - fuji37
-      - fuji38
-      - fuji39
-      - fuji40
-      - fuji41
-      - fuji42
-      - fuji43
-      - fuji44
-      - fuji45
-      - fuji46
-      - fuji47
-      - fuji48
-      - fuji49
-      - fuji50
-      - fuji51
-      - fuji52
-      - fuji53
-      - fuji54
-      - fuji55
-      - fuji56
-      - fuji57
-      - fuji58
-      - fuji59
-      - fuji60
-      - fuji61
-      - fuji62
-      - fuji63
-      - fuji64
-      - fuji65
-      - fuji66
-      - fuji67
-      - fuji68
-      - fuji69
-      - fuji70
-      - fuji71
-      - fuji72
-      - fuji73
-      - fuji74
-      - fuji75
-      - fuji76
-      - fuji77
-      - fuji78
-      - fuji79
-      - fuji80
-      - fuji81
-      - fuji82
-      - fuji83
-      - fuji84
-      - fuji85
-      - fuji86
-      - fuji87
-      - fuji88
-      - fuji89
-      - fuji90
-      - fuji91
-      - fuji92
-      - fuji93
-      - fuji94
-      - fuji95
-      - fuji96
-      - fuji97
-      - fuji98
-      - fuji99
-      - fuji100
-      - fuji101
-      - fuji102
-      - fuji103
-      - fuji104
-      - fuji105
-      - fuji106
-      - fuji107
-      - fuji108
-      - fuji109
-      - fuji110
-      - fuji111
-      - fuji112
-      - fuji113
-      - fuji114
-      - fuji115
-      - fuji116
-      - fuji117
-      - fuji118
-      - fuji119
-      - fuji120
-      - fuji121
-      - fuji122
-      - fuji123
-      - fuji124
-      - fuji125
-      - fuji126
-      - fuji127
-      - fuji128
-      - fuji129
-      - fuji130
-      - fuji131
-      - fuji132
-      - fuji133
-      - fuji134
-      - fuji135
-      - fuji136
-      - fuji137
-      - fuji138
-      - fuji139
-      - fuji140
-      - fuji141
-      - fuji142
-      - fuji143
-      - fuji144
-      - fuji145
-      - fuji146
-      - fuji147
-      - fuji148
-      - fuji149
-      - fuji150
-      - fuji151
-      - fuji152
-      - fuji153
-      - fuji154
-      - fuji155
-      - fuji156
-      - fuji157
-      - fuji158
-      - fuji159
-      - fuji160
-      - fuji161
-      - fuji162
-      - fuji163
-      - fuji164
-      - fuji165
-      - fuji166
-      - fuji167
-      - fuji168
-      - fuji169
-      - fuji170
-      - fuji171
-      - fuji172
-      - fuji173
-      - fuji174
-      - fuji175
-      - fuji176
-      - fuji177
-      - fuji178
-      - fuji179
-      - fuji180
-      - fuji181
-      - fuji182
-      - fuji183
-      - fuji184
-      - fuji185
-      - fuji186
-      - fuji187
-      - fuji188
-      - fuji189
-      - fuji190
-      - fuji191
-      - fuji192
-      - fuji193
-      - fuji194
-      - fuji195
-      - fuji196
-      - fuji197
-      - fuji198
-      - fuji199
-      - fuji200
-      - fuji201
-      - fuji202
-      - fuji203
-      - fuji204
-      - fuji205
-      - fuji206
-      - fuji207
-      - fuji208
-      - fuji209
-      - fuji210
-      - fuji211
-      - fuji212
-      - fuji213
-      - fuji214
-      - fuji215
-      - fuji216
-      - fuji217
-      - fuji218
-      - fuji219
-      - fuji220
-      - fuji221
-      - fuji222
-      - fuji223
-      - fuji224
-      - fuji225
-      - fuji226
-      - fuji227
-      - fuji228
-      - fuji229
-      - fuji230
-      - fuji231
-      - fuji232
-      - fuji233
-      - fuji234
-      - fuji235
-      - fuji236
-      - fuji237
-      - fuji238
-      - fuji239
-      - fuji240
-      - fuji241
-      - fuji242
-      - fuji243
-      - fuji244
-      - fuji245
-      - fuji246
-      - fuji247
-      - fuji248
-      - fuji249
-      - fuji250
-      - fuji251
-      - fuji252
-      - fuji253
-      - fuji254
-      - fuji255
-      - fuji256
-      - fuji257
-      - fuji258
-      - fuji259
-      - fuji260
-      - fuji261
-      - fuji262
-      - fuji263
-      - fuji264
-      - fuji265
-      - fuji266
-      - fuji267
-      - fuji268
-      - fuji269
-      - fuji270
-      - fuji271
-      - fuji272
-      - fuji273
-      - fuji274
-      - fuji275
-      - fuji276
-      - fuji277
-      - fuji278
-      - fuji279
-      - fuji280
-      - fuji281
-      - fuji282
-      - fuji283
-      - fuji284
-      - fuji285
-      - fuji286
-      - fuji287
-      - fuji288
-      - fuji289
-      - fuji290
-      - fuji291
-      - fuji292
-      - fuji293
-      - fuji294
-      - fuji295
-      - fuji296
-      - fuji297
-      - fuji298
-      - fuji299
-      - fuji300
-      - fuji301
-      - fuji302
-      - fuji303
-      - fuji304
-      - fuji305
-      - fuji306
-      - fuji307
-      - fuji308
-      - fuji309
-      - fuji310
-      - fuji311
-      - fuji312
-      - fuji313
-      - fuji314
-      - fuji315
-      - fuji316
-      - fuji317
-      - fuji318
-      - fuji319
-      - fuji320
-      - fuji321
-      - fuji322
-      - fuji323
-      - fuji324
-      - fuji325
-      - fuji326
-      - fuji327
-      - fuji328
-      - fuji329
-      - fuji330
-      - fuji331
-      - fuji332
-      - fuji333
-      - fuji334
-      - fuji335
-      - fuji336
-      - fuji337
-      - fuji338
-      - fuji339
-      - fuji340
-      - fuji341
-      - fuji342
-      - fuji343
-      - fuji344
-      - fuji345
-      - fuji346
-      - fuji347
-      - fuji348
-      - fuji349
-      - fuji350
-      - fuji351
-      - fuji352
-      - fuji353
-      - fuji354
-      - fuji355
-      - fuji356
-      - fuji357
-      - fuji358
-      - fuji359
-      - fuji360
-      - fuji361
-      - fuji362
-      - fuji363
-      - fuji364
-      - fuji365
-      - fuji366
-      - fuji367
-      - fuji368
-      - fuji369
-      - fuji370
-      - fuji371
-      - fuji372
-      - fuji373
-      - fuji374
-      - fuji375
-      - fuji376
-      - fuji377
-      - fuji378
-      - fuji379
-      - fuji380
-      - fuji381
-      - fuji382
-      - fuji383
-      - fuji384
-      - fuji385
-      - fuji386
-      - fuji387
-      - fuji388
-      - fuji389
-      - fuji390
-      - fuji391
-      - fuji392
-      - fuji393
-      - fuji394
-      - fuji395
-      - fuji396
-      - fuji397
-      - fuji398
-      - fuji399
-      - fuji400
-      - fuji401
-      - fuji402
-      - fuji403
-      - fuji404
-      - fuji405
-      - fuji406
-      - fuji407
-      - fuji408
-      - fuji409
-      - fuji410
-      - fuji411
-      - fuji412
-      - fuji413
-      - fuji414
-      - fuji415
-      - fuji416
-      - fuji417
-      - fuji418
-      - fuji419
-      - fuji420
-      - fuji421
-      - fuji422
-      - fuji423
-      - fuji424
-      - fuji425
-      - fuji426
-      - fuji427
-      - fuji428
-      - fuji429
-      - fuji430
-      - fuji431
-      - fuji432
-      - fuji433
-      - fuji434
-      - fuji435
-      - fuji436
-      - fuji437
-      - fuji438
-      - fuji439
-      - fuji440
-      - fuji441
-      - fuji442
-      - fuji443
-      - fuji444
-      - fuji445
-      - fuji446
-      - fuji447
-      - fuji448
-      - fuji449
-      - fuji450
-      - fuji451
-      - fuji452
-      - fuji453
-      - fuji454
-      - fuji455
-      - fuji456
-      - fuji457
-      - fuji458
-      - fuji459
-      - fuji460
-      - fuji461
-      - fuji462
-      - fuji463
-      - fuji464
-      - fuji465
-      - fuji466
-      - fuji467
-      - fuji468
-      - fuji469
-      - fuji470
-      - fuji471
-      - fuji472
-      - fuji473
-      - fuji474
-      - fuji475
-      - fuji476
-      - fuji477
-      - fuji478
-      - fuji479
-      - fuji480
-    restart: unless-stopped
+  # fill-database-fuji:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: fill-database-fuji
+  #   environment:
+  #     - MINI_DATABASE_URL=${MINI_DATABASE_URL}
+  #     - FUJI_HOST=docker
+  #   depends_on:
+  #     - fuji1
+  #     - fuji2
+  #     - fuji3
+  #     - fuji4
+  #     - fuji5
+  #     - fuji6
+  #     - fuji7
+  #     - fuji8
+  #     - fuji9
+  #     - fuji10
+  #     - fuji11
+  #     - fuji12
+  #     - fuji13
+  #     - fuji14
+  #     - fuji15
+  #     - fuji16
+  #     - fuji17
+  #     - fuji18
+  #     - fuji19
+  #     - fuji20
+  #     - fuji21
+  #     - fuji22
+  #     - fuji23
+  #     - fuji24
+  #     - fuji25
+  #     - fuji26
+  #     - fuji27
+  #     - fuji28
+  #     - fuji29
+  #     - fuji30
+  #     - fuji31
+  #     - fuji32
+  #     - fuji33
+  #     - fuji34
+  #     - fuji35
+  #     - fuji36
+  #     - fuji37
+  #     - fuji38
+  #     - fuji39
+  #     - fuji40
+  #     - fuji41
+  #     - fuji42
+  #     - fuji43
+  #     - fuji44
+  #     - fuji45
+  #     - fuji46
+  #     - fuji47
+  #     - fuji48
+  #     - fuji49
+  #     - fuji50
+  #     - fuji51
+  #     - fuji52
+  #     - fuji53
+  #     - fuji54
+  #     - fuji55
+  #     - fuji56
+  #     - fuji57
+  #     - fuji58
+  #     - fuji59
+  #     - fuji60
+  #     - fuji61
+  #     - fuji62
+  #     - fuji63
+  #     - fuji64
+  #     - fuji65
+  #     - fuji66
+  #     - fuji67
+  #     - fuji68
+  #     - fuji69
+  #     - fuji70
+  #     - fuji71
+  #     - fuji72
+  #     - fuji73
+  #     - fuji74
+  #     - fuji75
+  #     - fuji76
+  #     - fuji77
+  #     - fuji78
+  #     - fuji79
+  #     - fuji80
+  #     - fuji81
+  #     - fuji82
+  #     - fuji83
+  #     - fuji84
+  #     - fuji85
+  #     - fuji86
+  #     - fuji87
+  #     - fuji88
+  #     - fuji89
+  #     - fuji90
+  #     - fuji91
+  #     - fuji92
+  #     - fuji93
+  #     - fuji94
+  #     - fuji95
+  #     - fuji96
+  #     - fuji97
+  #     - fuji98
+  #     - fuji99
+  #     - fuji100
+  #     - fuji101
+  #     - fuji102
+  #     - fuji103
+  #     - fuji104
+  #     - fuji105
+  #     - fuji106
+  #     - fuji107
+  #     - fuji108
+  #     - fuji109
+  #     - fuji110
+  #     - fuji111
+  #     - fuji112
+  #     - fuji113
+  #     - fuji114
+  #     - fuji115
+  #     - fuji116
+  #     - fuji117
+  #     - fuji118
+  #     - fuji119
+  #     - fuji120
+  #     - fuji121
+  #     - fuji122
+  #     - fuji123
+  #     - fuji124
+  #     - fuji125
+  #     - fuji126
+  #     - fuji127
+  #     - fuji128
+  #     - fuji129
+  #     - fuji130
+  #     - fuji131
+  #     - fuji132
+  #     - fuji133
+  #     - fuji134
+  #     - fuji135
+  #     - fuji136
+  #     - fuji137
+  #     - fuji138
+  #     - fuji139
+  #     - fuji140
+  #     - fuji141
+  #     - fuji142
+  #     - fuji143
+  #     - fuji144
+  #     - fuji145
+  #     - fuji146
+  #     - fuji147
+  #     - fuji148
+  #     - fuji149
+  #     - fuji150
+  #     - fuji151
+  #     - fuji152
+  #     - fuji153
+  #     - fuji154
+  #     - fuji155
+  #     - fuji156
+  #     - fuji157
+  #     - fuji158
+  #     - fuji159
+  #     - fuji160
+  #     - fuji161
+  #     - fuji162
+  #     - fuji163
+  #     - fuji164
+  #     - fuji165
+  #     - fuji166
+  #     - fuji167
+  #     - fuji168
+  #     - fuji169
+  #     - fuji170
+  #     - fuji171
+  #     - fuji172
+  #     - fuji173
+  #     - fuji174
+  #     - fuji175
+  #     - fuji176
+  #     - fuji177
+  #     - fuji178
+  #     - fuji179
+  #     - fuji180
+  #     - fuji181
+  #     - fuji182
+  #     - fuji183
+  #     - fuji184
+  #     - fuji185
+  #     - fuji186
+  #     - fuji187
+  #     - fuji188
+  #     - fuji189
+  #     - fuji190
+  #     - fuji191
+  #     - fuji192
+  #     - fuji193
+  #     - fuji194
+  #     - fuji195
+  #     - fuji196
+  #     - fuji197
+  #     - fuji198
+  #     - fuji199
+  #     - fuji200
+  #     - fuji201
+  #     - fuji202
+  #     - fuji203
+  #     - fuji204
+  #     - fuji205
+  #     - fuji206
+  #     - fuji207
+  #     - fuji208
+  #     - fuji209
+  #     - fuji210
+  #     - fuji211
+  #     - fuji212
+  #     - fuji213
+  #     - fuji214
+  #     - fuji215
+  #     - fuji216
+  #     - fuji217
+  #     - fuji218
+  #     - fuji219
+  #     - fuji220
+  #     - fuji221
+  #     - fuji222
+  #     - fuji223
+  #     - fuji224
+  #     - fuji225
+  #     - fuji226
+  #     - fuji227
+  #     - fuji228
+  #     - fuji229
+  #     - fuji230
+  #     - fuji231
+  #     - fuji232
+  #     - fuji233
+  #     - fuji234
+  #     - fuji235
+  #     - fuji236
+  #     - fuji237
+  #     - fuji238
+  #     - fuji239
+  #     - fuji240
+  #     - fuji241
+  #     - fuji242
+  #     - fuji243
+  #     - fuji244
+  #     - fuji245
+  #     - fuji246
+  #     - fuji247
+  #     - fuji248
+  #     - fuji249
+  #     - fuji250
+  #     - fuji251
+  #     - fuji252
+  #     - fuji253
+  #     - fuji254
+  #     - fuji255
+  #     - fuji256
+  #     - fuji257
+  #     - fuji258
+  #     - fuji259
+  #     - fuji260
+  #     - fuji261
+  #     - fuji262
+  #     - fuji263
+  #     - fuji264
+  #     - fuji265
+  #     - fuji266
+  #     - fuji267
+  #     - fuji268
+  #     - fuji269
+  #     - fuji270
+  #     - fuji271
+  #     - fuji272
+  #     - fuji273
+  #     - fuji274
+  #     - fuji275
+  #     - fuji276
+  #     - fuji277
+  #     - fuji278
+  #     - fuji279
+  #     - fuji280
+  #     - fuji281
+  #     - fuji282
+  #     - fuji283
+  #     - fuji284
+  #     - fuji285
+  #     - fuji286
+  #     - fuji287
+  #     - fuji288
+  #     - fuji289
+  #     - fuji290
+  #     - fuji291
+  #     - fuji292
+  #     - fuji293
+  #     - fuji294
+  #     - fuji295
+  #     - fuji296
+  #     - fuji297
+  #     - fuji298
+  #     - fuji299
+  #     - fuji300
+  #     - fuji301
+  #     - fuji302
+  #     - fuji303
+  #     - fuji304
+  #     - fuji305
+  #     - fuji306
+  #     - fuji307
+  #     - fuji308
+  #     - fuji309
+  #     - fuji310
+  #     - fuji311
+  #     - fuji312
+  #     - fuji313
+  #     - fuji314
+  #     - fuji315
+  #     - fuji316
+  #     - fuji317
+  #     - fuji318
+  #     - fuji319
+  #     - fuji320
+  #     - fuji321
+  #     - fuji322
+  #     - fuji323
+  #     - fuji324
+  #     - fuji325
+  #     - fuji326
+  #     - fuji327
+  #     - fuji328
+  #     - fuji329
+  #     - fuji330
+  #     - fuji331
+  #     - fuji332
+  #     - fuji333
+  #     - fuji334
+  #     - fuji335
+  #     - fuji336
+  #     - fuji337
+  #     - fuji338
+  #     - fuji339
+  #     - fuji340
+  #     - fuji341
+  #     - fuji342
+  #     - fuji343
+  #     - fuji344
+  #     - fuji345
+  #     - fuji346
+  #     - fuji347
+  #     - fuji348
+  #     - fuji349
+  #     - fuji350
+  #     - fuji351
+  #     - fuji352
+  #     - fuji353
+  #     - fuji354
+  #     - fuji355
+  #     - fuji356
+  #     - fuji357
+  #     - fuji358
+  #     - fuji359
+  #     - fuji360
+  #     - fuji361
+  #     - fuji362
+  #     - fuji363
+  #     - fuji364
+  #     - fuji365
+  #     - fuji366
+  #     - fuji367
+  #     - fuji368
+  #     - fuji369
+  #     - fuji370
+  #     - fuji371
+  #     - fuji372
+  #     - fuji373
+  #     - fuji374
+  #     - fuji375
+  #     - fuji376
+  #     - fuji377
+  #     - fuji378
+  #     - fuji379
+  #     - fuji380
+  #     - fuji381
+  #     - fuji382
+  #     - fuji383
+  #     - fuji384
+  #     - fuji385
+  #     - fuji386
+  #     - fuji387
+  #     - fuji388
+  #     - fuji389
+  #     - fuji390
+  #     - fuji391
+  #     - fuji392
+  #     - fuji393
+  #     - fuji394
+  #     - fuji395
+  #     - fuji396
+  #     - fuji397
+  #     - fuji398
+  #     - fuji399
+  #     - fuji400
+  #     - fuji401
+  #     - fuji402
+  #     - fuji403
+  #     - fuji404
+  #     - fuji405
+  #     - fuji406
+  #     - fuji407
+  #     - fuji408
+  #     - fuji409
+  #     - fuji410
+  #     - fuji411
+  #     - fuji412
+  #     - fuji413
+  #     - fuji414
+  #     - fuji415
+  #     - fuji416
+  #     - fuji417
+  #     - fuji418
+  #     - fuji419
+  #     - fuji420
+  #     - fuji421
+  #     - fuji422
+  #     - fuji423
+  #     - fuji424
+  #     - fuji425
+  #     - fuji426
+  #     - fuji427
+  #     - fuji428
+  #     - fuji429
+  #     - fuji430
+  #     - fuji431
+  #     - fuji432
+  #     - fuji433
+  #     - fuji434
+  #     - fuji435
+  #     - fuji436
+  #     - fuji437
+  #     - fuji438
+  #     - fuji439
+  #     - fuji440
+  #     - fuji441
+  #     - fuji442
+  #     - fuji443
+  #     - fuji444
+  #     - fuji445
+  #     - fuji446
+  #     - fuji447
+  #     - fuji448
+  #     - fuji449
+  #     - fuji450
+  #     - fuji451
+  #     - fuji452
+  #     - fuji453
+  #     - fuji454
+  #     - fuji455
+  #     - fuji456
+  #     - fuji457
+  #     - fuji458
+  #     - fuji459
+  #     - fuji460
+  #     - fuji461
+  #     - fuji462
+  #     - fuji463
+  #     - fuji464
+  #     - fuji465
+  #     - fuji466
+  #     - fuji467
+  #     - fuji468
+  #     - fuji469
+  #     - fuji470
+  #     - fuji471
+  #     - fuji472
+  #     - fuji473
+  #     - fuji474
+  #     - fuji475
+  #     - fuji476
+  #     - fuji477
+  #     - fuji478
+  #     - fuji479
+  #     - fuji480
+  #   restart: unless-stopped
