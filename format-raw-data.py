@@ -1,10 +1,10 @@
 """Process ndjson files from datacite-slim-records and emdb-slim-records and create NDJSON files with processed datasets."""
 
+import contextlib
 import json
-import random
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from tqdm import tqdm
 
@@ -28,6 +28,56 @@ def clean_string(s: Optional[str]) -> str:
     return cleaned
 
 
+def parse_publication_date(record: Dict[str, Any]) -> Optional[datetime]:
+    """Parse publication date from record."""
+    if not record.get("publication_date"):
+        return None
+    with contextlib.suppress(ValueError, AttributeError, TypeError):
+        date_str = record["publication_date"]
+        if isinstance(date_str, str):
+            # Handle ISO format with Z suffix
+            if date_str.endswith("Z"):
+                date_str = f"{date_str[:-1]}+00:00"
+            return datetime.fromisoformat(date_str)
+    return None
+
+
+def clean_subjects(record: Dict[str, Any]) -> List[str]:
+    """Clean subjects from record."""
+    subjects = []
+    if subjects_raw := record.get("subjects", []):
+        for subject in subjects_raw:
+            if isinstance(subject, str):
+                if cleaned_subject := clean_string(subject):
+                    subjects.append(cleaned_subject)
+    return subjects
+
+
+def clean_authors(record: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Clean authors from record."""
+    authors = []
+    if authors_raw := record.get("creators", []):
+        for author in authors_raw:
+            if isinstance(author, dict):
+                name_type = author.get("name_type", "")
+                name = author.get("name", "")
+                name_identifiers = author.get("nameIdentifiers", [])
+                affiliations = author.get("affiliations", [])
+
+                cleaned_author = {
+                    "nameType": name_type,
+                    "name": clean_string(name),
+                    "nameIdentifiers": [
+                        clean_string(identifier) for identifier in name_identifiers
+                    ],
+                    "affiliations": [
+                        clean_string(affiliation) for affiliation in affiliations
+                    ],
+                }
+                authors.append(cleaned_author)
+    return authors
+
+
 def parse_datacite_record(record: Dict[str, Any], dataset_id: int) -> Dict[str, Any]:
     """Parse a datacite record into dataset format (db insert ready)."""
     source = record.get("source", "")
@@ -39,42 +89,16 @@ def parse_datacite_record(record: Dict[str, Any], dataset_id: int) -> Dict[str, 
     )
     publisher = record.get("publisher") or None
     version = record.get("version") or None
-    published_at = None
-    if record.get("publication_date"):
-        try:
-            date_str = record["publication_date"]
-            if isinstance(date_str, str):
-                # Handle ISO format with Z suffix
-                if date_str.endswith("Z"):
-                    date_str = f"{date_str[:-1]}+00:00"
-                published_at = datetime.fromisoformat(date_str)
-        except (ValueError, AttributeError, TypeError):
-            published_at = None
-
-    random_int = random.randint(0, 999999)
+    published_at = parse_publication_date(record)
 
     # Clean subjects
-    subjects_raw = record.get("subjects", [])
-    subjects = []
-    if subjects_raw:
-        for subject in subjects_raw:
-            if isinstance(subject, str):
-                if cleaned_subject := clean_string(subject):
-                    subjects.append(cleaned_subject)
+    subjects = clean_subjects(record)
 
-    # Clean authors JSON string
-    authors_raw = record.get("creators", [])
-    authors = "[]"
-    try:
-        cleaned_authors = json.dumps(authors_raw)
-        authors = clean_string(cleaned_authors)
-    except (TypeError, ValueError):
-        authors = "[]"
+    # Clean authors - keep as list of dicts, clean name and nameIdentifiers
+    authors = clean_authors(record)
 
-    # Clean identifiers
-    identifiers_raw = record.get("identifiers", [])
     identifiers = []
-    if identifiers_raw:
+    if identifiers_raw := record.get("identifiers", []):
         # {"identifier": "10.1000/187", "identifierType": "doi"}
         for identifier in identifiers_raw:
             iv = identifier.get("identifier", "")
@@ -103,7 +127,6 @@ def parse_datacite_record(record: Dict[str, Any], dataset_id: int) -> Dict[str, 
         "publishedAt": published_at.isoformat() if published_at else None,
         "subjects": subjects,
         "authors": authors,
-        "randomInt": random_int,
     }
 
 
@@ -116,37 +139,13 @@ def parse_emdb_record(record: Dict[str, Any], dataset_id: int) -> Dict[str, Any]
     )
     publisher = record.get("publisher") or None
     version = record.get("version") or None
-    published_at = None
-    if record.get("publication_date"):
-        try:
-            date_str = record["publication_date"]
-            if isinstance(date_str, str):
-                # Handle ISO format with Z suffix
-                if date_str.endswith("Z"):
-                    date_str = f"{date_str[:-1]}+00:00"
-                published_at = datetime.fromisoformat(date_str)
-        except (ValueError, AttributeError, TypeError):
-            published_at = None
-
-    random_int = random.randint(0, 999999)
+    published_at = parse_publication_date(record)
 
     # Clean subjects
-    subjects_raw = record.get("subjects", [])
-    subjects = []
-    if subjects_raw:
-        for subject in subjects_raw:
-            if isinstance(subject, str):
-                if cleaned_subject := clean_string(subject):
-                    subjects.append(cleaned_subject)
+    subjects = clean_subjects(record)
 
-    # Clean authors JSON string
-    authors_raw = record.get("creators", [])
-    authors = "[]"
-    try:
-        cleaned_authors = json.dumps(authors_raw)
-        authors = clean_string(cleaned_authors)
-    except (TypeError, ValueError):
-        authors = "[]"
+    # Clean authors - keep as list of dicts, clean name and nameIdentifiers
+    authors = clean_authors(record)
 
     # There is only one identifier in EMDB, so we can use it as the main identifier
     identifiers_raw = record.get("identifiers", [])
@@ -176,7 +175,6 @@ def parse_emdb_record(record: Dict[str, Any], dataset_id: int) -> Dict[str, Any]
         "publishedAt": published_at.isoformat() if published_at else None,
         "subjects": subjects,
         "authors": authors,
-        "randomInt": random_int,
     }
 
 
@@ -198,15 +196,47 @@ def count_lines_in_files(ndjson_files: List[Path], source_dir: Path) -> int:
 
 
 def write_batch_to_file(
-    batch: List[Dict[str, Any]], file_number: int, output_dir: Path
+    batch: List[Dict[str, Any]],
+    file_number: int,
+    output_dir: Path,
+    prefix: Optional[str] = None,
 ) -> None:
     """Write a batch of processed records to a numbered NDJSON file."""
-    file_name = f"{file_number}.ndjson"
+    file_name = f"{prefix}{file_number}.ndjson" if prefix else f"{file_number}.ndjson"
     file_path = output_dir / file_name
 
     with open(file_path, "w", encoding="utf-8") as f:
         for record in batch:
             f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
+def process_record_line(
+    raw_line: str,
+    dataset_id: int,
+    parser_func: Callable[[Dict[str, Any], int], Dict[str, Any]],
+    file_name: Optional[str] = None,
+) -> Tuple[Optional[Dict[str, Any]], int, bool]:
+    """Process a single record line.
+
+    Args:
+        raw_line: Raw JSON line to process
+        dataset_id: Current dataset ID
+        parser_func: Function to parse records
+        file_name: Optional file name for error messages
+
+    Returns:
+        Tuple of (processed_dataset or None, next_dataset_id, success)
+    """
+    try:
+        record = json.loads(raw_line)
+        processed_dataset = parser_func(record, dataset_id)
+        return processed_dataset, dataset_id + 1, True
+    except (json.JSONDecodeError, KeyError, TypeError) as error:
+        if file_name:
+            tqdm.write(f"    ⚠️  Failed to parse line in {file_name}: {error}")
+        else:
+            tqdm.write(f"    ⚠️  Failed to parse line: {error}")
+        return None, dataset_id + 1, False
 
 
 def process_all_files(
@@ -216,6 +246,7 @@ def process_all_files(
     total_lines: int,
     parser_func: Callable[[Dict[str, Any], int], Dict[str, Any]],
     starting_dataset_id: int = 1,
+    prefix: Optional[str] = None,
 ) -> int:
     """Process all ndjson files and create new NDJSON files with processed records.
 
@@ -258,22 +289,19 @@ def process_all_files(
                 if len(current_batch) >= RECORDS_PER_FILE:
                     processed_batch = []
                     for raw_line in current_batch:
-                        try:
-                            record = json.loads(raw_line)
-                            processed_dataset = parser_func(record, dataset_id)
+                        processed_dataset, dataset_id, success = process_record_line(
+                            raw_line, dataset_id, parser_func, file_name
+                        )
+                        if success:
                             processed_batch.append(processed_dataset)
-                            dataset_id += 1
                             total_records_processed += 1
-                        except (json.JSONDecodeError, KeyError, TypeError) as error:
-                            print(f"line: {raw_line}")
-                            dataset_id += 1
+                        else:
                             total_records_skipped += 1
-                            tqdm.write(
-                                f"    ⚠️  Failed to parse line in {file_name}: {error}"
-                            )
 
                     # Write the processed batch
-                    write_batch_to_file(processed_batch, file_number, output_dir)
+                    write_batch_to_file(
+                        processed_batch, file_number, output_dir, prefix
+                    )
                     file_number += 1
                     current_batch = []
 
@@ -283,18 +311,16 @@ def process_all_files(
     if current_batch:
         processed_batch = []
         for raw_line in current_batch:
-            try:
-                record = json.loads(raw_line)
-                processed_dataset = parser_func(record, dataset_id)
+            processed_dataset, dataset_id, success = process_record_line(
+                raw_line, dataset_id, parser_func
+            )
+            if success:
                 processed_batch.append(processed_dataset)
-                dataset_id += 1
                 total_records_processed += 1
-            except (json.JSONDecodeError, KeyError, TypeError) as error:
-                dataset_id += 1
+            else:
                 total_records_skipped += 1
-                tqdm.write(f"    ⚠️  Failed to parse line: {error}")
 
-        write_batch_to_file(processed_batch, file_number, output_dir)
+        write_batch_to_file(processed_batch, file_number, output_dir, prefix)
 
     print(f"\n  📊 Total records processed: {total_records_processed:,}")
     if total_records_skipped > 0:
@@ -382,6 +408,7 @@ def main() -> None:
         output_dir,
         total_lines,
         parse_datacite_record,
+        prefix="datacite-",
     )
 
     print("\n✅ Datacite files have been processed successfully!")
@@ -414,6 +441,7 @@ def main() -> None:
         emdb_total_lines,
         parse_emdb_record,
         starting_dataset_id=final_dataset_id,
+        prefix="emdb-",
     )
 
     print("\n✅ All files have been processed successfully!")
