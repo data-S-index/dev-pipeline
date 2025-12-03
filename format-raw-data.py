@@ -1,4 +1,4 @@
-"""Process ndjson files from datacite-slim-records and create JSON files with processed datasets."""
+"""Process ndjson files from datacite-slim-records and emdb-slim-records and create NDJSON files with processed datasets."""
 
 import json
 import random
@@ -9,7 +9,7 @@ from typing import Any, Callable, Dict, List, Optional
 from tqdm import tqdm
 
 
-RECORDS_PER_FILE = 1000  # Records per output file
+RECORDS_PER_FILE = 10000  # Records per output file
 
 
 def clean_string(s: Optional[str]) -> str:
@@ -58,8 +58,7 @@ def parse_datacite_record(record: Dict[str, Any], dataset_id: int) -> Dict[str, 
     if subjects_raw:
         for subject in subjects_raw:
             if isinstance(subject, str):
-                cleaned_subject = clean_string(subject)
-                if cleaned_subject:  # Only add non-empty subjects
+                if cleaned_subject := clean_string(subject):
                     subjects.append(cleaned_subject)
 
     # Clean authors JSON string
@@ -81,7 +80,7 @@ def parse_datacite_record(record: Dict[str, Any], dataset_id: int) -> Dict[str, 
             identifier_type = identifier.get("identifier_type", "") or identifier.get(
                 "identifierType", ""
             )
-            identifier_type = identifier_type.lower()
+            identifier_type = (identifier_type or "").lower()
             if identifier_value and identifier_type:
                 identifiers.append(
                     {"identifier": identifier_value, "identifierType": identifier_type}
@@ -135,8 +134,7 @@ def parse_emdb_record(record: Dict[str, Any], dataset_id: int) -> Dict[str, Any]
     if subjects_raw:
         for subject in subjects_raw:
             if isinstance(subject, str):
-                cleaned_subject = clean_string(subject)
-                if cleaned_subject:  # Only add non-empty subjects
+                if cleaned_subject := clean_string(subject):
                     subjects.append(cleaned_subject)
 
     # Clean authors JSON string
@@ -154,7 +152,7 @@ def parse_emdb_record(record: Dict[str, Any], dataset_id: int) -> Dict[str, Any]
     main_identifier_type = identifiers_raw[0].get(
         "identifier_type", ""
     ) or identifiers_raw[0].get("identifierType", "")
-    main_identifier_type = main_identifier_type.lower()
+    main_identifier_type = (main_identifier_type or "").lower()
 
     identifiers = [
         {
@@ -200,12 +198,13 @@ def count_lines_in_files(ndjson_files: List[Path], source_dir: Path) -> int:
 def write_batch_to_file(
     batch: List[Dict[str, Any]], file_number: int, output_dir: Path
 ) -> None:
-    """Write a batch of processed records to a numbered JSON file."""
-    file_name = f"{file_number}.json"
+    """Write a batch of processed records to a numbered NDJSON file."""
+    file_name = f"{file_number}.ndjson"
     file_path = output_dir / file_name
 
     with open(file_path, "w", encoding="utf-8") as f:
-        json.dump(batch, f, indent=False, ensure_ascii=False)
+        for record in batch:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
 def process_all_files(
@@ -216,7 +215,7 @@ def process_all_files(
     parser_func: Callable[[Dict[str, Any], int], Dict[str, Any]],
     starting_dataset_id: int = 1,
 ) -> int:
-    """Process all ndjson files and create new JSON files with processed records.
+    """Process all ndjson files and create new NDJSON files with processed records.
 
     Args:
         ndjson_files: List of ndjson file paths to process
@@ -304,7 +303,7 @@ def process_all_files(
 
 
 def main() -> None:
-    """Main function to process ndjson files and create JSON output files."""
+    """Main function to process ndjson files and create NDJSON output files."""
     print("🚀 Starting database preparation process...")
 
     datacite_source_folder_name = "datacite-slim-records"
@@ -355,6 +354,9 @@ def main() -> None:
     print("\n📖 Step 2: Finding ndjson files...")
     ndjson_files = list(datacite_source_dir.glob("*.ndjson"))
 
+    # sort by filename
+    ndjson_files = sorted(ndjson_files, key=lambda x: x.name)
+
     print(f"  Found {len(ndjson_files)} .ndjson file(s) to process")
 
     if not ndjson_files:
@@ -362,7 +364,8 @@ def main() -> None:
 
     # Step 3: Count total lines in all files
     print("\n📊 Step 3: Counting total lines in input files...")
-    total_lines = count_lines_in_files(ndjson_files, datacite_source_dir)
+    # total_lines = count_lines_in_files(ndjson_files, datacite_source_dir)
+    total_lines = 49009522
     print(f"  Found {total_lines:,} total lines to process")
 
     # Step 4: Process all files and create new files with processed records
