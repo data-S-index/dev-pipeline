@@ -31,7 +31,8 @@ def clean_string(s: Optional[str]) -> str:
 def parse_datacite_record(record: Dict[str, Any], dataset_id: int) -> Dict[str, Any]:
     """Parse a datacite record into dataset format (db insert ready)."""
     source = record.get("source", "")
-    doi = record.get("doi", "").lower() if record.get("doi") else None
+    doi = record.get("doi", "")
+    doi = doi.lower() if doi else None
     title = record.get("title", "")
     description = (
         clean_string(record.get("description")) if record.get("description") else None
@@ -76,11 +77,12 @@ def parse_datacite_record(record: Dict[str, Any], dataset_id: int) -> Dict[str, 
     if identifiers_raw:
         # {"identifier": "10.1000/187", "identifierType": "doi"}
         for identifier in identifiers_raw:
-            identifier_value = identifier.get("identifier", "").lower()
-            identifier_type = identifier.get("identifier_type", "") or identifier.get(
+            iv = identifier.get("identifier", "")
+            identifier_value = iv.lower() if iv else None
+            it = identifier.get("identifier_type", "") or identifier.get(
                 "identifierType", ""
             )
-            identifier_type = (identifier_type or "").lower()
+            identifier_type = it.lower() if it else None
             if identifier_value and identifier_type:
                 identifiers.append(
                     {"identifier": identifier_value, "identifierType": identifier_type}

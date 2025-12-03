@@ -1,6 +1,8 @@
-"""Process citations from MDC NDJSON file and create JSON files with citation records."""
+"""Process citations from MDC NDJSON file and create NDJSON files with citation records."""
 
+import contextlib
 import json
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -9,7 +11,7 @@ from tqdm import tqdm
 
 
 CITATIONS_PER_FILE = 10000  # Citations per output file
-DOI_TO_ID_MAP_FILE = "doi_to_id_map.json"  # Intermediate mapping file
+IDENTIFIER_TO_ID_MAP_FILE = "identifier_to_id_map.ndjson"  # Intermediate mapping file
 
 
 def clean_string(s: Optional[str]) -> str:
@@ -23,13 +25,13 @@ def clean_string(s: Optional[str]) -> str:
         return ""
 
     # URL-safe characters: alphanumeric and common URL characters
-    # For DOIs: alphanumeric, dots, slashes, colons, hyphens, underscores
+    # For identifiers: alphanumeric, dots, slashes, colons, hyphens, underscores
     cleaned = ""
     for char in s:
         # Allow alphanumeric
         if char.isalnum():
             cleaned += char
-        # Allow common URL-safe characters for DOIs
+        # Allow common URL-safe characters for identifiers
         elif char in (".", "/", ":", "-", "_", "~"):
             cleaned += char
         # Remove everything else (including control chars, spaces, special chars)
@@ -38,26 +40,26 @@ def clean_string(s: Optional[str]) -> str:
 
 
 def extract_citation_from_mdc_record(
-    record: Dict[str, Any], doi_to_id: Dict[str, int]
+    record: Dict[str, Any], identifier_to_id: Dict[str, int]
 ) -> Optional[Dict[str, Any]]:
     """Extract a single citation from an MDC citation record.
 
     MDC record format:
     {
-        "doi": "10.3886/icpsr36361",  # Citing dataset DOI
+        "doi": "10.3886/icpsr36361",  # Citing dataset identifier (key is "doi" but value is identifier)
         "source": ["mdc"],
         "citation_link": "https://doi.org/10.2105/ajph.2017.303743",  # Cited DOI
         "citation_date": "2017-06-01T00:00:00+00:00",
         "citation_weight": 1.26
     }
     """
-    # Get the DOI of the citing dataset
-    citing_doi = record.get("doi")
-    if not citing_doi:
+    # Get the identifier of the citing dataset (key is "doi" but value is actually identifier)
+    citing_identifier = record.get("doi")
+    if not citing_identifier:
         return None
 
-    citing_doi_lower = citing_doi.lower()
-    citing_dataset_id = doi_to_id.get(citing_doi_lower)
+    citing_identifier_lower = citing_identifier.lower()
+    citing_dataset_id = identifier_to_id.get(citing_identifier_lower)
 
     if not citing_dataset_id:
         # This dataset is not in our mapping, skip
@@ -83,7 +85,7 @@ def extract_citation_from_mdc_record(
             if isinstance(cited_date, str):
                 # Handle ISO format with Z suffix
                 if cited_date.endswith("Z"):
-                    cited_date = cited_date[:-1] + "+00:00"
+                    cited_date = f"{cited_date[:-1]}+00:00"
                 # Validate by parsing
                 datetime.fromisoformat(cited_date)
             else:
@@ -97,20 +99,16 @@ def extract_citation_from_mdc_record(
     citation_weight = 1.0
     weight_value = record.get("citation_weight") or record.get("citationWeight")
     if weight_value is not None:
-        try:
+        with contextlib.suppress(ValueError, TypeError):
             citation_weight = float(weight_value)
-        except (ValueError, TypeError):
-            pass
-
     # Determine source flags
     source = record.get("source", [])
     if not isinstance(source, list):
         source = []
 
-    # Create citation record
-    citation = {
+    return {
         "datasetId": citing_dataset_id,
-        "doi": citing_doi_lower,  # Source DOI (citing dataset)
+        "identifier": citing_identifier_lower,  # Source identifier (citing dataset)
         "citationLink": cited_link_cleaned,  # Target link (cited, cleaned for URL safety)
         "datacite": False,
         "mdc": True,
@@ -118,8 +116,6 @@ def extract_citation_from_mdc_record(
         "citedDate": cited_date,
         "citationWeight": citation_weight,
     }
-
-    return citation
 
 
 def count_total_citations(ndjson_file: Path) -> int:
@@ -146,25 +142,20 @@ def count_total_citations(ndjson_file: Path) -> int:
         total=total_lines, desc="  Counting citations", unit="record", unit_scale=True
     )
 
-    try:
+    with contextlib.suppress(Exception):
         with open(ndjson_file, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:
                     continue
-                try:
+                with contextlib.suppress(json.JSONDecodeError, KeyError, TypeError):
                     record = json.loads(line)
                     # Each line is one citation record
                     if record.get("doi") and (
                         record.get("citation_link") or record.get("citationLink")
                     ):
                         total_citations += 1
-                except (json.JSONDecodeError, KeyError, TypeError):
-                    pass
                 pbar.update(1)
-    except Exception:
-        pass
-
     pbar.close()
     return total_citations
 
@@ -172,21 +163,22 @@ def count_total_citations(ndjson_file: Path) -> int:
 def write_citation_batch(
     batch: List[Dict[str, Any]], file_number: int, output_dir: Path
 ) -> None:
-    """Write a batch of citations to a numbered JSON file."""
-    file_name = f"{file_number}.json"
+    """Write a batch of citations to a numbered NDJSON file."""
+    file_name = f"{file_number}.ndjson"
     file_path = output_dir / file_name
 
     with open(file_path, "w", encoding="utf-8") as f:
-        json.dump(batch, f, indent=False, ensure_ascii=False)
+        for citation in batch:
+            f.write(json.dumps(citation, ensure_ascii=False) + "\n")
 
 
 def process_citations(
     ndjson_file: Path,
     output_dir: Path,
-    doi_to_id: Dict[str, int],
+    identifier_to_id: Dict[str, int],
     total_citations: int,
 ) -> None:
-    """Process NDJSON file and create citation JSON files."""
+    """Process NDJSON file and create citation NDJSON files."""
     file_number = 1
     current_batch: List[Dict[str, Any]] = []
     total_citations_processed = 0
@@ -207,7 +199,9 @@ def process_citations(
 
                 try:
                     record = json.loads(line)
-                    citation = extract_citation_from_mdc_record(record, doi_to_id)
+                    citation = extract_citation_from_mdc_record(
+                        record, identifier_to_id
+                    )
 
                     if citation:
                         current_batch.append(citation)
@@ -258,7 +252,7 @@ def main() -> None:
     ndjson_file = downloads_dir / ndjson_file_name
     dataset_dir = downloads_dir / "database" / dataset_folder_name
     output_dir = downloads_dir / "database" / output_folder_name
-    mapping_file = downloads_dir / "database" / DOI_TO_ID_MAP_FILE
+    mapping_file = downloads_dir / "database" / IDENTIFIER_TO_ID_MAP_FILE
 
     print(f"Reading NDJSON file: {ndjson_file}")
     print(f"Reading dataset files from: {dataset_dir}")
@@ -289,22 +283,34 @@ def main() -> None:
     # Ensure mapping file directory exists
     mapping_file.parent.mkdir(parents=True, exist_ok=True)
 
-    # Step 2: Load DOI to ID mapping
-    print("\n🗺️  Step 2: Loading DOI to ID mapping...")
+    # Step 2: Load identifier to ID mapping
+    print("\n🗺️  Step 2: Loading identifier to ID mapping...")
     if not mapping_file.exists():
         raise FileNotFoundError(
             f"Mapping file not found: {mapping_file}. "
-            f"Please run build-doi-datasetid-map.py first to create the mapping file."
+            f"Please run build-identifier-datasetid-map.py first to create the mapping file."
         )
 
+    start_time = time.perf_counter()
     try:
+        identifier_to_id: Dict[str, int] = {}
         with open(mapping_file, "r", encoding="utf-8") as f:
-            doi_to_id = json.load(f)
-        print(f"  ✓ Loaded {len(doi_to_id):,} DOI mappings from file")
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                record = json.loads(line)
+                identifier = record.get("identifier", "").lower()
+                dataset_id = record.get("id")
+                if identifier and dataset_id:
+                    identifier_to_id[identifier] = dataset_id
+        elapsed_time = time.perf_counter() - start_time
+        print(f"  ✓ Loaded {len(identifier_to_id):,} identifier mappings from file")
+        print(f"  ⏱️  Time taken: {elapsed_time:.2f} seconds")
     except Exception as e:
         raise RuntimeError(
             f"Error reading mapping file {mapping_file}: {e}. "
-            f"Please run build-doi-datasetid-map.py to rebuild the mapping file."
+            f"Please run build-identifier-datasetid-map.py to rebuild the mapping file."
         )
 
     # Step 3: Count total citations
@@ -318,7 +324,7 @@ def main() -> None:
         f"(~{CITATIONS_PER_FILE:,} citations each)..."
     )
 
-    process_citations(ndjson_file, output_dir, doi_to_id, total_citations)
+    process_citations(ndjson_file, output_dir, identifier_to_id, total_citations)
 
     print("\n✅ All citations have been processed successfully!")
     print(f"🎉 Processed files are available in: {output_dir}")
