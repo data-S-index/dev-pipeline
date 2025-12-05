@@ -30,3 +30,6 @@ MINI_DATABASE_URL = get_env("MINI_DATABASE_URL", optional=True)
 
 # Instance count for FUJI endpoints (default: 30)
 INSTANCE_COUNT = int(get_env("INSTANCE_COUNT", optional=True) or "30")
+
+SEARCH_API_URL = get_env("SEARCH_API_URL", optional=True)
+SEARCH_API_KEY = get_env("SEARCH_API_KEY", optional=True)

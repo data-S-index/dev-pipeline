@@ -13,6 +13,7 @@ termcolor
 pillow
 tqdm
 cuid2
+meilisearch
 
 # Environment
 python-dotenv
