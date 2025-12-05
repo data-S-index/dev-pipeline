@@ -1,6 +1,7 @@
 """Build identifier to dataset ID mapping from processed dataset NDJSON files."""
 
 import json
+import re
 from pathlib import Path
 from typing import Dict
 
@@ -8,6 +9,15 @@ from tqdm import tqdm
 
 
 IDENTIFIER_TO_ID_MAP_FILE = "identifier_to_id_map.ndjson"  # Intermediate mapping file
+
+
+def natural_sort_key(path: Path) -> tuple:
+    """Generate a sort key for natural sorting (alphabetical then numerical)."""
+    name = path.name
+    # Split filename into text and numeric parts
+    parts = re.split(r"(\d+)", name)
+    # Convert numeric parts to int, keep text parts as strings
+    return tuple(int(part) if part.isdigit() else part.lower() for part in parts)
 
 
 def build_identifier_to_id_mapping(
@@ -19,26 +29,10 @@ def build_identifier_to_id_mapping(
     """
     print("  Building identifier to ID mapping...")
 
-    # Check if mapping file already exists
+    # Remove mapping file if it exists
     if mapping_file.exists():
-        print(f"  ✓ Found existing mapping file: {mapping_file}")
-        try:
-            mapping: Dict[str, int] = {}
-            with open(mapping_file, "r", encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    record = json.loads(line)
-                    identifier = record.get("identifier", "").lower()
-                    dataset_id = record.get("id")
-                    if identifier and dataset_id:
-                        mapping[identifier] = dataset_id
-            print(f"  ✓ Loaded {len(mapping):,} identifier mappings from file")
-            return mapping
-        except Exception as e:
-            print(f"  ⚠️  Error reading mapping file: {e}")
-            print("  Rebuilding mapping...")
+        mapping_file.unlink()
+        print(f"  ✓ Removed existing mapping file: {mapping_file}")
 
     # Check if dataset directory exists
     if not dataset_dir.exists():
@@ -48,17 +42,12 @@ def build_identifier_to_id_mapping(
         )
 
     # Find all NDJSON files in dataset directory
-    # Sort numerically by filename (e.g., 1.ndjson, 2.ndjson, ...)
+    # Sort by filename using natural sort (alphabetical then numerical)
     dataset_files = []
     for file_path in dataset_dir.glob("*.ndjson"):
-        try:
-            # Try to parse filename as integer for proper numeric sorting
-            int(file_path.stem)
+        if file_path.stem.startswith("datacite-") or file_path.stem.startswith("emdb-"):
             dataset_files.append(file_path)
-        except ValueError:
-            # Skip files that don't have numeric names
-            continue
-    dataset_files = sorted(dataset_files, key=lambda p: int(p.stem))
+    dataset_files = sorted(dataset_files, key=natural_sort_key)
 
     if not dataset_files:
         raise FileNotFoundError(
@@ -91,6 +80,10 @@ def build_identifier_to_id_mapping(
 
     # Process files to build mapping
     mapping: Dict[str, int] = {}
+    duplicate_count = 0
+    conflict_count = 0
+    duplicate_identifiers = set()
+    conflict_details = []
     pbar = tqdm(
         total=total_records, desc="  Building mapping", unit="record", unit_scale=True
     )
@@ -116,8 +109,23 @@ def build_identifier_to_id_mapping(
 
                         if dataset_id and identifier:
                             identifier_lower = identifier.lower()
-                            # Store mapping (handle duplicate identifiers by keeping first occurrence)
-                            if identifier_lower not in mapping:
+                            # Check for duplicates and conflicts
+                            if identifier_lower in mapping:
+                                duplicate_count += 1
+                                duplicate_identifiers.add(identifier_lower)
+                                # Check if it's a conflict (different dataset_id)
+                                if mapping[identifier_lower] != dataset_id:
+                                    conflict_count += 1
+                                    conflict_details.append(
+                                        {
+                                            "identifier": identifier_lower,
+                                            "existing_id": mapping[identifier_lower],
+                                            "new_id": dataset_id,
+                                            "file": file_path.name,
+                                        }
+                                    )
+                            else:
+                                # Store mapping (first occurrence)
                                 mapping[identifier_lower] = dataset_id
                     except (KeyError, TypeError):
                         pass
@@ -128,6 +136,30 @@ def build_identifier_to_id_mapping(
             continue
 
     pbar.close()
+
+    # Report duplicate statistics
+    if duplicate_count > 0:
+        print(f"  ⚠️  Found {duplicate_count:,} duplicate identifier(s)")
+        print(
+            f"  ⚠️  {len(duplicate_identifiers):,} unique identifier(s) appear multiple times"
+        )
+        if conflict_count > 0:
+            print(
+                f"  ❌ Found {conflict_count:,} conflict(s) (same identifier, different dataset IDs)"
+            )
+            print("  ⚠️  Showing first 10 conflicts:")
+            for i, conflict in enumerate(conflict_details[:10], 1):
+                print(
+                    f"    {i}. Identifier '{conflict['identifier']}': "
+                    f"existing ID {conflict['existing_id']} vs new ID {conflict['new_id']} "
+                    f"(from {conflict['file']})"
+                )
+            if len(conflict_details) > 10:
+                print(f"    ... and {len(conflict_details) - 10} more conflict(s)")
+        else:
+            print("  ✓ All duplicates map to the same dataset ID (no conflicts)")
+    else:
+        print("  ✓ No duplicate identifiers found")
 
     # Save mapping to file in NDJSON format
     print(f"  💾 Saving mapping to {mapping_file}...")

@@ -2,6 +2,7 @@
 
 import contextlib
 import json
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -10,6 +11,15 @@ from tqdm import tqdm
 
 
 RECORDS_PER_FILE = 10000  # Records per output file
+
+
+def natural_sort_key(path: Path) -> tuple:
+    """Generate a sort key for natural sorting (alphabetical then numerical)."""
+    name = path.name
+    # Split filename into text and numeric parts
+    parts = re.split(r"(\d+)", name)
+    # Convert numeric parts to int, keep text parts as strings
+    return tuple(int(part) if part.isdigit() else part.lower() for part in parts)
 
 
 def clean_string(s: Optional[str]) -> str:
@@ -111,6 +121,17 @@ def parse_datacite_record(record: Dict[str, Any], dataset_id: int) -> Dict[str, 
                 identifiers.append(
                     {"identifier": identifier_value, "identifierType": identifier_type}
                 )
+
+        # remove duplicates from identifiers
+        # Convert to tuples for deduplication (dicts are unhashable)
+        seen = set()
+        unique_identifiers = []
+        for identifier in identifiers:
+            identifier_tuple = (identifier["identifier"], identifier["identifierType"])
+            if identifier_tuple not in seen:
+                seen.add(identifier_tuple)
+                unique_identifiers.append(identifier)
+        identifiers = unique_identifiers
     else:
         identifiers = []
 
@@ -382,8 +403,8 @@ def main() -> None:
     print("\n📖 Step 2: Finding ndjson files...")
     ndjson_files = list(datacite_source_dir.glob("*.ndjson"))
 
-    # sort by filename
-    ndjson_files = sorted(ndjson_files, key=lambda x: x.name)
+    # sort by filename using natural sort (alphabetical then numerical)
+    ndjson_files = sorted(ndjson_files, key=natural_sort_key)
 
     print(f"  Found {len(ndjson_files)} .ndjson file(s) to process")
 

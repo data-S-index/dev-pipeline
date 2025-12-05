@@ -1,6 +1,6 @@
 generator client {
     provider        = "prisma-client"
-    previewFeatures = ["strictUndefinedChecks", "fullTextSearchPostgres"]
+    previewFeatures = ["strictUndefinedChecks"]
     output          = "../shared/generated/"
     engineType      = "client"
 }
@@ -34,38 +34,6 @@ model User {
     updated DateTime @updatedAt
 
     userDatasets UserDataset[]
-
-    @@index([emailAddress])
-}
-
-model Dataset {
-    id  Int    @id @default(autoincrement())
-    doi String @unique
-
-    title       String
-    description String?
-    version     String?
-
-    publisher   String?
-    publishedAt DateTime
-
-    authors String @default("[]") // A stringified version of the authors array for full text search : [{ nameType: String?, name: String, affiliations: String[], nameIdentifiers: string[]}]
-
-    domain   String?
-    subjects String[]
-
-    randomInt Int @default(0) // a field to touch when data in a related table is updated - For sorting by last updated
-
-    created DateTime @default(now())
-    updated DateTime @updatedAt
-
-    Citation  Citation[]
-    Mention   Mention[]
-    FujiScore FujiScore?
-
-    datasetClaims UserDataset[]
-
-    @@index([doi])
 }
 
 model UserDataset {
@@ -79,10 +47,87 @@ model UserDataset {
     updated DateTime @updatedAt
 
     @@id([userId, datasetId])
+    @@index([userId])
+    @@index([datasetId])
+}
+
+model Dataset {
+    id Int @id @default(autoincrement())
+
+    source String? // The source of the dataset - e.g. "datacite", "emdb", "pmid", etc.
+
+    identifier     String
+    identifierType String // doi, emdb, pmid, etc.
+
+    url String? // Might be important in the future for linking to the dataset if the identifier is not enough
+
+    title       String
+    description String?
+    version     String?
+
+    publisher   String?
+    publishedAt DateTime
+
+    domain   String?
+    subjects String[]
+
+    created DateTime @default(now())
+    updated DateTime @updatedAt
+
+    datasetIdentifiers DatasetIdentifier[]
+    datasetAuthors     DatasetAuthor[]
+
+    citations Citation[]
+    mentions  Mention[]
+    fujiScore FujiScore?
+
+    fujiJobs FujiJob[]
+
+    datasetClaims UserDataset[]
+
+    @@unique([identifierType, identifier])
+    @@index([title]) // for search
+    @@index([identifier])
+    @@index([publishedAt])
+}
+
+model DatasetAuthor {
+    id BigInt @id @default(autoincrement())
+
+    dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+    datasetId Int
+
+    nameType        String?
+    name            String
+    nameIdentifiers String[] @default([])
+
+    affiliations String[] @default([])
+
+    created DateTime @default(now())
+    updated DateTime @updatedAt
+
+    @@index([name, datasetId])
+    @@index([datasetId])
+}
+
+model DatasetIdentifier {
+    id Int @id @default(autoincrement())
+
+    dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+    datasetId Int
+
+    identifier     String
+    identifierType String // doi, emdb, pmid, etc.
+
+    created DateTime @default(now())
+    updated DateTime @updatedAt
+
+    @@unique([datasetId, identifierType, identifier])
+    @@index([identifierType, identifier])
 }
 
 model Citation {
-    id String @id @default(cuid(2))
+    id BigInt @id @default(autoincrement())
 
     dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
     datasetId Int
@@ -98,15 +143,19 @@ model Citation {
 
     created DateTime @default(now())
     updated DateTime @updatedAt
+
+    @@unique([datasetId, citationLink])
+    @@index([datasetId])
+    @@index([citedDate])
 }
 
 model FujiScore {
-    id String @id @default(cuid(2))
+    id Int @id @default(autoincrement())
 
     dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
     datasetId Int     @unique
 
-    score          Float    @default(0.0) // 0.0-100.0
+    score          Float? // default is null so that we can store the score later
     evaluationDate DateTime
 
     metricVersion   String
@@ -116,18 +165,34 @@ model FujiScore {
     updated DateTime @updatedAt
 }
 
-model Mention {
-    id String @id @default(cuid(2))
+model FujiJob {
+    id Int @id @default(autoincrement())
 
     dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
     datasetId Int
 
-    link   String
-    source String // github, linkedin, twitter, etc.
+    created DateTime @default(now())
+    updated DateTime @updatedAt
+
+    @@index([datasetId])
+}
+
+model Mention {
+    id BigInt @id @default(autoincrement())
+
+    dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+    datasetId Int
+
+    mentionLink String
+    source      String // github, linkedin, twitter, software heritage, etc.
 
     mentionedDate DateTime?
     mentionWeight Float     @default(1.0) // The weight of the mention (1.0 = 100% of the mention impact)
 
     created DateTime @default(now())
     updated DateTime @updatedAt
+
+    @@unique([datasetId, mentionLink, source])
+    @@index([datasetId])
+    @@index([mentionedDate])
 }
