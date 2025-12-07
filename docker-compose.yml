@@ -216,8 +216,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: fill-database-fuji
+    command: python fill-database-fuji.py
     environment:
-      - MINI_DATABASE_URL=${MINI_DATABASE_URL}
       - FUJI_HOST=docker
       - INSTANCE_COUNT=30
     depends_on:
@@ -252,3 +252,5 @@ services:
       - fuji29
       - fuji30
     restart: unless-stopped
+    stdin_open: true
+    tty: true

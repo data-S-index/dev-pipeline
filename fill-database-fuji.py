@@ -1,42 +1,16 @@
-"""Fill database with Fuji scores by querying datasets without scores and calling the FUJI API."""
+"""Process Fuji scores by fetching jobs from API and calling the FUJI API."""
 
-import asyncio
 import base64
 import os
+import random
 import time
+import threading
 from datetime import datetime
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List, Dict, Any
 
-import httpx
-import psycopg
-from psycopg_pool import ConnectionPool
+import requests
 
-from config import MINI_DATABASE_URL, INSTANCE_COUNT
-
-
-"""
-CREATE TABLE "Dataset" (
-    id BIGSERIAL PRIMARY KEY,
-    doi TEXT,
-    score FLOAT DEFAULT NULL,
-    evaluationdate TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_dataset_doi ON "Dataset" (doi);
-
-CREATE TABLE fuji_jobs (
-    id          BIGSERIAL PRIMARY KEY,
-    dataset_id  BIGINT NOT NULL UNIQUE,
-    doi         TEXT   NOT NULL
-);
-
--- Pre-fill the queue:
-INSERT INTO fuji_jobs (dataset_id, doi)
-SELECT id, doi
-FROM "Dataset"
-WHERE score IS NULL
-ON CONFLICT (dataset_id) DO NOTHING;
-"""
+from config import INSTANCE_COUNT
 
 # Generate a list of ports from 54001 to 54030
 MIN_PORT = 54001
@@ -80,19 +54,30 @@ HEADERS = {
     "Content-Type": "application/json",
 }
 
-# Batch size for processing - instance count x 3 concurrent requests
-BATCH_SIZE = INSTANCE_COUNT * 3
-
 # Retry configuration
 MAX_RETRIES = 3
 RETRY_DELAY = 2  # seconds
-DB_RETRY_DELAY = 1  # seconds for database retries
-MAX_DB_RETRIES = 5  # Maximum retries for database operations
 
-# Connection pool configuration
-# Lowered to allow multiple instances to run concurrently without exhausting DB connections
-CONNECTION_POOL_MIN = 2
-CONNECTION_POOL_MAX = 10
+# API endpoints for fetching jobs and posting results
+JOBS_API_URL = "https://scholardata.io/api/jobs"
+PRIORITY_JOBS_API_URL = "https://scholardata.io/api/jobs/priority"
+RESULTS_API_URL = "https://scholardata.io/api/results"
+
+
+def random_sleep(min_seconds: float = 5.0, max_seconds: float = 10.0) -> None:
+    """
+    Sleep for a random duration between min_seconds and max_seconds.
+
+    Args:
+        min_seconds: Minimum sleep duration (default: 5.0)
+        max_seconds: Maximum sleep duration (default: 10.0)
+    """
+    sleep_time = random.uniform(min_seconds, max_seconds)
+    time.sleep(sleep_time)
+
+
+# Global shutdown event for graceful thread termination
+shutdown_event = threading.Event()
 
 
 def get_fuji_score_and_date(
@@ -126,13 +111,12 @@ def get_fuji_score_and_date(
     # Extract evaluation date from results["end_timestamp"]
     evaluation_date = None
     try:
-        end_timestamp = results.get("end_timestamp")
-        if end_timestamp:
+        if end_timestamp := results.get("end_timestamp"):
             # Parse ISO format timestamp
             if isinstance(end_timestamp, str):
                 # Handle various timestamp formats
                 if end_timestamp.endswith("Z"):
-                    end_timestamp = end_timestamp[:-1] + "+00:00"
+                    end_timestamp = f"{end_timestamp[:-1]}+00:00"
                 evaluation_date = datetime.fromisoformat(
                     end_timestamp.replace("Z", "+00:00")
                 )
@@ -145,82 +129,71 @@ def get_fuji_score_and_date(
     return score, evaluation_date
 
 
-def update_database_with_retry(
-    connection_pool: ConnectionPool,
-    dataset_id: int,
-    score: Optional[float],
-    evaluation_date: datetime,
-) -> Tuple[bool, Optional[str]]:
+def fetch_jobs_from_api(client: requests.Session) -> List[Dict[str, Any]]:
     """
-    Update database with retry logic for connection failures.
+    Fetch jobs from the API endpoints (priority first, then regular).
 
     Args:
-        connection_pool: Database connection pool
-        dataset_id: Dataset ID to update
-        score: Fuji score to set
-        evaluation_date: Evaluation date to set
+        client: HTTP client
 
     Returns:
-        Tuple of (success, error_message)
+        List of job dictionaries with 'id' and 'identifier' keys
     """
-    for db_attempt in range(MAX_DB_RETRIES):
-        try:
-            with connection_pool.connection() as conn:
-                with conn.cursor() as cur:
-                    # Update the Dataset table directly
-                    cur.execute(
-                        """
-                        UPDATE "Dataset"
-                        SET score = %s, "evaluationdate" = %s
-                        WHERE id = %s
-                        """,
-                        (score, evaluation_date, dataset_id),
-                    )
-                conn.commit()
-            return (True, None)
-        except psycopg.OperationalError as e:
-            # Connection errors - retry with backoff
-            if db_attempt < MAX_DB_RETRIES - 1:
-                time.sleep(DB_RETRY_DELAY * (db_attempt + 1))
-                continue
-            return (False, f"Database connection error: {str(e)}")
-        except psycopg.Error as e:
-            # Other database errors - don't retry
-            return (False, f"Database error: {str(e)}")
-        except Exception as e:
-            return (False, f"Unexpected database error: {str(e)}")
+    all_jobs = []
 
-    return (False, "Max database retries exceeded")
+    # Fetch priority jobs first
+    try:
+        response = client.get(PRIORITY_JOBS_API_URL, timeout=30.0)
+        response.raise_for_status()
+        priority_jobs = response.json()
+        if isinstance(priority_jobs, list):
+            all_jobs.extend(priority_jobs)
+    except Exception:
+        pass  # Silently continue if priority jobs fail
+
+    # Fetch regular jobs
+    try:
+        response = client.get(JOBS_API_URL, timeout=120.0)
+        response.raise_for_status()
+        regular_jobs = response.json()
+        if isinstance(regular_jobs, list):
+            all_jobs.extend(regular_jobs)
+    except Exception:
+        pass  # Silently continue if regular jobs fail
+
+    return all_jobs
 
 
-async def score_row(
-    row: Tuple[int, str],
+def score_job(
+    job: Dict[str, Any],
     endpoint: str,
-    connection_pool: ConnectionPool,
-    client: httpx.AsyncClient,
-) -> Tuple[int, bool, Optional[str]]:
+    client: requests.Session,
+) -> Optional[Dict[str, Any]]:
     """
-    Score a single dataset row by calling the FUJI API.
+    Score a single job by calling the FUJI API.
 
     Args:
-        row: Tuple of (dataset_id, doi)
+        job: Dictionary with 'id' and 'identifier' keys
         endpoint: FUJI API endpoint URL
-        connection_pool: Database connection pool
-        client: Async HTTP client
+        client: HTTP client
 
     Returns:
-        Tuple of (dataset_id, success, error_message)
+        Result dictionary matching the schema, or None if failed
     """
-    dataset_id, doi = row
+    job_id = job.get("id")
+    identifier = job.get("identifier")
+
+    if not job_id or not identifier:
+        return None
 
     # Retry logic for API calls
     for attempt in range(MAX_RETRIES):
-        print(
-            f"Attempt {attempt + 1} of {MAX_RETRIES} for dataset {dataset_id} with DOI {doi} to endpoint {endpoint}"
-        )
         try:
+            # Sleep before making FUJI API request
+            random_sleep()
+
             payload = {
-                "object_identifier": doi,
+                "object_identifier": identifier,
                 "test_debug": True,
                 "metadata_service_endpoint": "http://ws.pangaea.de/oai/provider",
                 "metadata_service_type": "oai_pmh",
@@ -228,282 +201,237 @@ async def score_row(
                 "use_github": False,
                 "metric_version": "metrics_v0.5",
             }
-            r = await client.post(endpoint, json=payload, headers=HEADERS, timeout=60.0)
+            r = client.post(endpoint, json=payload, headers=HEADERS, timeout=60.0)
             r.raise_for_status()
             data = r.json()
 
             # Extract score and evaluation date from API response
             score, evaluation_date = get_fuji_score_and_date(data)
 
+            # Only return result if we successfully extracted a score
+            # Skip jobs where score extraction failed
+            if score is None:
+                print(f"  ⚠️  Failed to extract score for job {job_id}, skipping")
+                return None
+
             # Use current time if evaluation_date is not available
             if evaluation_date is None:
                 evaluation_date = datetime.now()
 
-            # Update database with retry logic (run in executor since it's sync)
-            loop = asyncio.get_running_loop()
-            success, error = await loop.run_in_executor(
-                None,
-                update_database_with_retry,
-                connection_pool,
-                dataset_id,
-                score,
-                evaluation_date,
-            )
+            # Extract metric version and software version from FUJI response
+            metric_version = data.get("metric_version", "metrics_v0.5")
+            software_version = data.get("software_version", "unknown")
 
-            if success:
-                return (dataset_id, True, None)
-            else:
-                # If database update fails, retry the whole operation
-                if attempt < MAX_RETRIES - 1:
-                    await asyncio.sleep(RETRY_DELAY * (attempt + 1))
-                    continue
-                return (dataset_id, False, error)
+            # If not directly available, try to extract from other fields
+            if metric_version == "unknown":
+                metric_version = payload.get("metric_version", "metrics_v0.5")
 
-        except httpx.RequestError as e:
+            # Return result in the specified schema format
+            return {
+                "datasetId": job_id,
+                "score": float(score),
+                "evaluationDate": evaluation_date.isoformat(),
+                "metricVersion": str(metric_version),
+                "softwareVersion": str(software_version),
+            }
+
+        except requests.RequestException as e:
             if attempt < MAX_RETRIES - 1:
-                await asyncio.sleep(RETRY_DELAY * (attempt + 1))  # Exponential backoff
+                time.sleep(RETRY_DELAY * (attempt + 1))  # Exponential backoff
                 continue
-            return (dataset_id, False, f"API error: {str(e)}")
-        except httpx.HTTPStatusError as e:
-            if attempt < MAX_RETRIES - 1:
-                await asyncio.sleep(RETRY_DELAY * (attempt + 1))
-                continue
-            return (dataset_id, False, f"HTTP error: {str(e)}")
+            print(f"  ⚠️  API error for job {job_id}: {str(e)}")
+            return None
         except Exception as e:
             if attempt < MAX_RETRIES - 1:
-                await asyncio.sleep(RETRY_DELAY * (attempt + 1))
+                time.sleep(RETRY_DELAY * (attempt + 1))
                 continue
-            return (dataset_id, False, f"Unexpected error: {str(e)}")
+            print(f"  ⚠️  Unexpected error for job {job_id}: {str(e)}")
+            return None
 
-    return (dataset_id, False, "Max retries exceeded")
+    return None
 
 
-def get_jobs_batch(conn: psycopg.Connection, limit: int) -> list:
+def is_valid_result(result: Dict[str, Any]) -> bool:
     """
-    Claim a batch of jobs from the fuji_jobs queue using DELETE ... RETURNING.
-
-    This atomically removes jobs from the queue and returns them, ensuring
-    that each job is processed by exactly one worker across all machines.
-    Postgres handles row locking internally, so no explicit locking is needed.
+    Validate that a result has all required fields and valid data.
 
     Args:
-        conn: Database connection
-        limit: Maximum number of jobs to claim
+        result: Result dictionary to validate
 
     Returns:
-        List of tuples (dataset_id, doi)
+        True if valid, False otherwise
     """
-    with conn.cursor() as cur:
-        cur.execute(
-            """
-            DELETE FROM fuji_jobs
-            WHERE id IN (
-                SELECT id
-                FROM fuji_jobs
-                ORDER BY id
-                LIMIT %s
-            )
-            RETURNING dataset_id, doi;
-            """,
-            (limit,),
-        )
-        return cur.fetchall()
+    if not result or not isinstance(result, dict):
+        return False
+
+    required_fields = [
+        "datasetId",
+        "score",
+        "evaluationDate",
+        "metricVersion",
+        "softwareVersion",
+    ]
+    for field in required_fields:
+        if field not in result:
+            return False
+
+    # Validate data types
+    if not isinstance(result.get("datasetId"), (int, float)):
+        return False
+    if not isinstance(result.get("score"), (int, float)):
+        return False
+    if not isinstance(result.get("evaluationDate"), str):
+        return False
+    if not isinstance(result.get("metricVersion"), str):
+        return False
+    if not isinstance(result.get("softwareVersion"), str):
+        return False
+
+    return True
 
 
-async def main() -> None:
-    """Main function to fill database with Fuji scores."""
-    print("🚀 Starting Fuji score database fill process...")
-    print(f"📡 Using {len(FUJI_ENDPOINTS)} FUJI API endpoints")
+def post_results_to_api(
+    client: requests.Session, results: List[Dict[str, Any]]
+) -> bool:
+    """
+    POST results to the API endpoint.
 
-    if not MINI_DATABASE_URL:
-        raise ValueError("MINI_DATABASE_URL not set in environment or .env file")
+    Args:
+        client: HTTP client
+        results: List of result dictionaries
 
-    # Create connection pool
-    print("\n🔌 Creating database connection pool...")
+    Returns:
+        True if successful, False otherwise
+    """
+    if not results:
+        return True
+
+    payload = {"results": results}
+
     try:
-        # Create connection pool with keepalive settings
-        connection_pool = ConnectionPool(
-            MINI_DATABASE_URL,
-            min_size=CONNECTION_POOL_MIN,
-            max_size=CONNECTION_POOL_MAX,
-            kwargs={
-                "autocommit": False,
-                "connect_timeout": 10,
-                "keepalives": 1,
-                "keepalives_idle": 30,
-                "keepalives_interval": 10,
-                "keepalives_count": 5,
-            },
+        response = client.post(
+            RESULTS_API_URL,
+            json=payload,
+            headers={"Content-Type": "application/json"},
+            timeout=120.0,
         )
-        print(
-            f"  ✅ Connection pool created (min={CONNECTION_POOL_MIN}, max={CONNECTION_POOL_MAX})"
-        )
+        response.raise_for_status()
+        return True
+    except requests.RequestException as e:
+        print(f"  ⚠️  Error posting results: {str(e)}")
+        return False
+    except Exception as e:
+        print(f"  ⚠️  Error posting results: {str(e)}")
+        return False
 
-        # Test connection
-        with connection_pool.connection() as conn:
-            print("  ✅ Database connection test successful")
 
-            # Ensure fuji_jobs table exists
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS fuji_jobs (
-                        id          BIGSERIAL PRIMARY KEY,
-                        dataset_id  BIGINT NOT NULL UNIQUE,
-                        doi         TEXT   NOT NULL
-                    );
-                    """
-                )
-                conn.commit()
-                print("  ✅ fuji_jobs table ready")
+def worker_thread(thread_id: int, endpoint: str) -> None:
+    """
+    Worker thread function that continuously fetches jobs, processes them, and posts results.
 
-            # Pre-fill the queue if it's empty
-            with conn.cursor() as cur:
-                cur.execute("SELECT COUNT(*) FROM fuji_jobs")
-                queue_count = cur.fetchone()[0]
+    Args:
+        thread_id: Unique identifier for this thread
+        endpoint: FUJI API endpoint URL to use for this thread
+    """
+    print(f"🧵 Thread {thread_id} starting...")
 
-                if queue_count == 0:
-                    print("  📥 Pre-filling fuji_jobs queue from Dataset table...")
-                    cur.execute(
-                        """
-                        INSERT INTO fuji_jobs (dataset_id, doi)
-                        SELECT id, doi
-                        FROM "Dataset"
-                        WHERE score IS NULL
-                        ON CONFLICT (dataset_id) DO NOTHING
-                        """
-                    )
-                    conn.commit()
-                    cur.execute("SELECT COUNT(*) FROM fuji_jobs")
-                    queue_count = cur.fetchone()[0]
-                    print(f"  ✅ Pre-filled {queue_count:,} jobs into queue")
-                else:
-                    print(f"  📊 Found {queue_count:,} jobs already in queue")
+    # Create HTTP client for this thread
+    with requests.Session() as client:
+        while not shutdown_event.is_set():
+            try:
+                # Fetch jobs from API
+                print(f"🧵 Thread {thread_id}: 📥 Fetching jobs...")
+                jobs = fetch_jobs_from_api(client)
 
-            # Check how many jobs are in the queue
-            with conn.cursor() as cur:
-                cur.execute("SELECT COUNT(*) FROM fuji_jobs")
-                total_pending = cur.fetchone()[0]
+                if not jobs:
+                    print(f"🧵 Thread {thread_id}: ✅ No jobs found, waiting...")
+                    # Check shutdown event during wait
+                    if shutdown_event.wait(timeout=10):
+                        break
+                    continue
 
-            if total_pending == 0:
-                print(
-                    "\n✅ No jobs in queue - all datasets may already have Fuji scores!"
-                )
-                connection_pool.close()
-                return
+                # Sleep before processing jobs
+                random_sleep()
 
-            print(f"  📊 Queue contains {total_pending:,} jobs to process")
+                print(f"🧵 Thread {thread_id}: 📊 Processing {len(jobs):,} jobs...")
 
-        # Process in batches using a single persistent connection for fetching
-        total_processed = 0
-        total_succeeded = 0
-        total_failed = 0
-        start_time = time.time()  # Track start time for rate calculation
-        last_remaining_update = 0  # Track when we last updated the remaining count
-        remaining_update_interval = 1000  # Update remaining count every 1000 IDs
+                # Process all jobs
+                results = []
 
-        # Create async HTTP client
-        async with httpx.AsyncClient() as client:
-            # Use a single connection for batch fetching
-            with connection_pool.connection() as fetch_conn:
-                last_progress_print = 0
-                progress_print_interval = 100  # Print progress every 100 datasets
-
-                while True:
-                    # Claim next batch of jobs from the queue
-                    rows = get_jobs_batch(fetch_conn, BATCH_SIZE)
-                    fetch_conn.commit()  # Commit the DELETE transaction
-
-                    if not rows:
-                        print("  ✅ No more jobs in queue, exiting")
+                for job in jobs:
+                    # Check for shutdown signal
+                    if shutdown_event.is_set():
+                        print(
+                            f"🧵 Thread {thread_id}: ⚠️  Shutdown requested, stopping..."
+                        )
                         break
 
-                    # Create tasks for all rows in the batch (round-robin endpoints)
-                    tasks = [
-                        score_row(
-                            row,
-                            FUJI_ENDPOINTS[i % len(FUJI_ENDPOINTS)],
-                            connection_pool,
-                            client,
-                        )
-                        for i, row in enumerate(rows)
-                    ]
+                    result = score_job(job, endpoint, client)
+                    if result is not None and is_valid_result(result):
+                        results.append(result)
 
-                    # Use asyncio.gather to process all tasks concurrently (like Promise.all)
-                    results = await asyncio.gather(*tasks, return_exceptions=True)
+                # Post results to API after processing all jobs
+                if results:
+                    print(
+                        f"🧵 Thread {thread_id}: 📤 Posting {len(results)} results..."
+                    )
+                    post_results_to_api(client, results)
 
-                    # Process results
-                    for result in results:
-                        if isinstance(result, Exception):
-                            total_processed += 1
-                            total_failed += 1
-                            print(f"  ⚠️  Exception: {result}")
-                        else:
-                            dataset_id, success, error = result
-                            total_processed += 1
+                print(f"🧵 Thread {thread_id}: ✅ Completed")
 
-                            if success:
-                                total_succeeded += 1
-                            else:
-                                total_failed += 1
-                                print(f"  ⚠️  Failed dataset {dataset_id}: {error}")
+                # Sleep before fetching next batch of jobs
+                random_sleep()
 
-                        # Update remaining count every 1000 IDs (for multi-machine scenarios)
-                        if (
-                            total_processed - last_remaining_update
-                            >= remaining_update_interval
-                        ):
-                            with fetch_conn.cursor() as cur:
-                                cur.execute("SELECT COUNT(*) FROM fuji_jobs")
-                                total_pending = cur.fetchone()[0]
-                            last_remaining_update = total_processed
+            except Exception as e:
+                if shutdown_event.is_set():
+                    print(f"🧵 Thread {thread_id}: ⚠️  Shutdown requested")
+                    break
+                print(f"🧵 Thread {thread_id}: ❌ Error: {e}")
+                print(f"🧵 Thread {thread_id}: Retrying...")
+                # Check shutdown event during wait
+                if shutdown_event.wait(timeout=5):
+                    break
+                continue
 
-                        # Print progress periodically
-                        if (
-                            total_processed - last_progress_print
-                            >= progress_print_interval
-                        ):
-                            elapsed_time = time.time() - start_time
-                            total_estimated = total_processed + total_pending
-                            progress_pct = (
-                                (total_processed / total_estimated * 100)
-                                if total_estimated > 0
-                                else 0
-                            )
-                            rate_per_second = (
-                                total_processed / elapsed_time
-                                if elapsed_time > 0
-                                else 0
-                            )
-                            print(
-                                f"  📊 Progress: {total_processed:,} processed, "
-                                f"{total_pending:,} remaining "
-                                f"({progress_pct:.1f}%) - "
-                                f"Succeeded: {total_succeeded:,}, Failed: {total_failed:,} - "
-                                f"Rate: {rate_per_second:.2f}/s"
-                            )
-                            last_progress_print = total_processed
+        print(f"🧵 Thread {thread_id}: 🛑 Stopped")
 
-        print("\n✅ Fuji score database fill completed!")
-        print("📊 Summary:")
-        print(f"  - Total processed: {total_processed:,}")
-        print(f"  - Succeeded: {total_succeeded:,}")
-        print(f"  - Failed: {total_failed:,}")
 
-        # Close connection pool
-        connection_pool.close()
+def main() -> None:
+    """Main function to create and start worker threads that run continuously."""
+    print("🚀 Starting Fuji score processing...")
+    print(f"📡 Using {len(FUJI_ENDPOINTS)} FUJI API endpoints")
+    print(f"🧵 Creating {INSTANCE_COUNT} worker threads...")
+    print("💡 Program will run continuously. Press Ctrl+C to stop.\n")
 
-    except psycopg.Error as e:
-        print(f"\n❌ Database error: {e}")
-        raise
-    except Exception as e:
-        print(f"\n❌ Error occurred: {e}")
-        raise
+    threads = []
+
+    # Create and start threads
+    for i in range(INSTANCE_COUNT):
+        # Round-robin assignment of endpoints to threads
+        endpoint = FUJI_ENDPOINTS[i % len(FUJI_ENDPOINTS)]
+        thread = threading.Thread(
+            target=worker_thread, args=(i + 1, endpoint), name=f"Worker-{i + 1}"
+        )
+        threads.append(thread)
+        thread.start()
+
+    # Wait for all threads to complete (they run indefinitely until interrupted)
+    try:
+        for thread in threads:
+            thread.join()
+    except KeyboardInterrupt:
+        print("\n\n⚠️  Shutting down threads...")
+        shutdown_event.set()  # Signal all threads to stop
+        # Wait for threads to finish current iteration
+        for thread in threads:
+            thread.join(timeout=10)  # Give threads time to finish gracefully
+
+    print("\n✅ All threads stopped!")
 
 
 if __name__ == "__main__":
     try:
-        asyncio.run(main())
+        main()
     except KeyboardInterrupt:
         print("\n\n⚠️  Process interrupted by user")
         exit(1)
