@@ -67,13 +67,13 @@ PRIORITY_JOBS_API_URL = f"{DOMAIN}/api/fuji/jobs/priority"
 RESULTS_API_URL = f"{DOMAIN}/api/fuji/jobs/results"
 
 
-def random_sleep(min_seconds: float = 5.0, max_seconds: float = 10.0) -> None:
+def random_sleep(min_seconds: float = 5.0, max_seconds: float = 30.0) -> None:
     """
     Sleep for a random duration between min_seconds and max_seconds.
 
     Args:
         min_seconds: Minimum sleep duration (default: 5.0)
-        max_seconds: Maximum sleep duration (default: 10.0)
+        max_seconds: Maximum sleep duration (default: 30.0)
     """
     sleep_time = random.uniform(min_seconds, max_seconds)
     time.sleep(sleep_time)
