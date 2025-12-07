@@ -1,0 +1,22 @@
+services:
+  fuji1:
+    image: ghcr.io/pangaea-data-publisher/fuji:3.5.0
+    container_name: fuji1
+    ports:
+      - "54001:1071"
+    restart: unless-stopped
+
+  fill-database-fuji:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fill-database-fuji
+    command: python fill-database-fuji.py
+    environment:
+      - INSTANCE_COUNT=1
+      - FUJI_HOST=docker
+    depends_on:
+      - fuji1
+    restart: unless-stopped
+    stdin_open: true
+    tty: true

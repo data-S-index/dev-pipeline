@@ -7,7 +7,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY . .
+COPY fill-database-fuji.py .
+COPY config.py .
 
 # Set Python to unbuffered mode for better logging in Docker
 ENV PYTHONUNBUFFERED=1
