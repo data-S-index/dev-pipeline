@@ -5,6 +5,7 @@ import os
 import random
 import time
 import threading
+import contextlib
 from datetime import datetime
 from typing import Optional, Tuple, List, Dict, Any
 
@@ -31,7 +32,7 @@ if FUJI_PORT:
 elif FUJI_HOST == "docker":
     # Docker mode: use service names (fuji1, fuji2, etc.) with internal port 1071
     FUJI_ENDPOINTS = [
-        f"http://fuji{i+1}:1071/fuji/api/v1/evaluate" for i in range(INSTANCE_COUNT)
+        f"http://fuji{i + 1}:1071/fuji/api/v1/evaluate" for i in range(INSTANCE_COUNT)
     ]
 else:
     # Local development mode: use localhost with external ports
@@ -59,9 +60,9 @@ MAX_RETRIES = 3
 RETRY_DELAY = 2  # seconds
 
 # API endpoints for fetching jobs and posting results
-JOBS_API_URL = "https://scholardata.io/api/jobs"
-PRIORITY_JOBS_API_URL = "https://scholardata.io/api/jobs/priority"
-RESULTS_API_URL = "https://scholardata.io/api/results"
+JOBS_API_URL = "https://scholardata.io/api/fuji/jobs"
+PRIORITY_JOBS_API_URL = "https://scholardata.io/api/fuji/jobs/priority"
+RESULTS_API_URL = "https://scholardata.io/api/fuji/results"
 
 
 def random_sleep(min_seconds: float = 5.0, max_seconds: float = 10.0) -> None:
@@ -142,24 +143,20 @@ def fetch_jobs_from_api(client: requests.Session) -> List[Dict[str, Any]]:
     all_jobs = []
 
     # Fetch priority jobs first
-    try:
+    with contextlib.suppress(Exception):
         response = client.get(PRIORITY_JOBS_API_URL, timeout=30.0)
         response.raise_for_status()
         priority_jobs = response.json()
         if isinstance(priority_jobs, list):
             all_jobs.extend(priority_jobs)
-    except Exception:
-        pass  # Silently continue if priority jobs fail
 
     # Fetch regular jobs
-    try:
+    with contextlib.suppress(Exception):
         response = client.get(JOBS_API_URL, timeout=120.0)
         response.raise_for_status()
         regular_jobs = response.json()
         if isinstance(regular_jobs, list):
             all_jobs.extend(regular_jobs)
-    except Exception:
-        pass  # Silently continue if regular jobs fail
 
     return all_jobs
 
@@ -194,12 +191,6 @@ def score_job(
 
             payload = {
                 "object_identifier": identifier,
-                "test_debug": True,
-                "metadata_service_endpoint": "http://ws.pangaea.de/oai/provider",
-                "metadata_service_type": "oai_pmh",
-                "use_datacite": True,
-                "use_github": False,
-                "metric_version": "metrics_v0.5",
             }
             r = client.post(endpoint, json=payload, headers=HEADERS, timeout=60.0)
             r.raise_for_status()

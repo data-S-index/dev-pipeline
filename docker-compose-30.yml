@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   fuji1:
     image: ghcr.io/pangaea-data-publisher/fuji:latest

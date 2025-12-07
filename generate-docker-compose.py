@@ -24,7 +24,7 @@ services = "".join(
 
 depends = "".join([f"      - fuji{i}\n" for i in range(1, number + 1)])
 
-content = f"""version: "3.9"
+content = f"""
 
 services:
 {services}  fill-database-fuji:
@@ -32,11 +32,14 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: fill-database-fuji
+    command: python fill-database-fuji.py
     environment:
-      - MINI_DATABASE_URL=${{MINI_DATABASE_URL}}
+      - INSTANCE_COUNT={number}
       - FUJI_HOST=docker
     depends_on:
 {depends}    restart: unless-stopped
+    stdin_open: true
+    tty: true
 """
 
 output_filename = f"docker-compose-{number}.yml"
