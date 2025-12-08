@@ -11,7 +11,7 @@ number = args.number
 services = "".join(
     [
         f"""  fuji{i}:
-    image: ghcr.io/data-s-index/fuji:3.5.0
+    image: ghcr.io/data-S-index/fuji:latest
     container_name: fuji{i}
     ports:
       - "{54000 + i}:1071"
