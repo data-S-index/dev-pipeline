@@ -1,6 +1,6 @@
 services:
   fuji1:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji1
     ports:
       - "54001:1071"

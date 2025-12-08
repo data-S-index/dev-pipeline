@@ -1,839 +1,839 @@
 services:
   fuji1:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji1
     ports:
       - "54001:1071"
     restart: unless-stopped
 
   fuji2:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji2
     ports:
       - "54002:1071"
     restart: unless-stopped
 
   fuji3:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji3
     ports:
       - "54003:1071"
     restart: unless-stopped
 
   fuji4:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji4
     ports:
       - "54004:1071"
     restart: unless-stopped
 
   fuji5:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji5
     ports:
       - "54005:1071"
     restart: unless-stopped
 
   fuji6:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji6
     ports:
       - "54006:1071"
     restart: unless-stopped
 
   fuji7:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji7
     ports:
       - "54007:1071"
     restart: unless-stopped
 
   fuji8:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji8
     ports:
       - "54008:1071"
     restart: unless-stopped
 
   fuji9:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji9
     ports:
       - "54009:1071"
     restart: unless-stopped
 
   fuji10:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji10
     ports:
       - "54010:1071"
     restart: unless-stopped
 
   fuji11:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji11
     ports:
       - "54011:1071"
     restart: unless-stopped
 
   fuji12:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji12
     ports:
       - "54012:1071"
     restart: unless-stopped
 
   fuji13:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji13
     ports:
       - "54013:1071"
     restart: unless-stopped
 
   fuji14:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji14
     ports:
       - "54014:1071"
     restart: unless-stopped
 
   fuji15:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji15
     ports:
       - "54015:1071"
     restart: unless-stopped
 
   fuji16:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji16
     ports:
       - "54016:1071"
     restart: unless-stopped
 
   fuji17:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji17
     ports:
       - "54017:1071"
     restart: unless-stopped
 
   fuji18:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji18
     ports:
       - "54018:1071"
     restart: unless-stopped
 
   fuji19:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji19
     ports:
       - "54019:1071"
     restart: unless-stopped
 
   fuji20:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji20
     ports:
       - "54020:1071"
     restart: unless-stopped
 
   fuji21:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji21
     ports:
       - "54021:1071"
     restart: unless-stopped
 
   fuji22:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji22
     ports:
       - "54022:1071"
     restart: unless-stopped
 
   fuji23:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji23
     ports:
       - "54023:1071"
     restart: unless-stopped
 
   fuji24:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji24
     ports:
       - "54024:1071"
     restart: unless-stopped
 
   fuji25:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji25
     ports:
       - "54025:1071"
     restart: unless-stopped
 
   fuji26:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji26
     ports:
       - "54026:1071"
     restart: unless-stopped
 
   fuji27:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji27
     ports:
       - "54027:1071"
     restart: unless-stopped
 
   fuji28:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji28
     ports:
       - "54028:1071"
     restart: unless-stopped
 
   fuji29:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji29
     ports:
       - "54029:1071"
     restart: unless-stopped
 
   fuji30:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji30
     ports:
       - "54030:1071"
     restart: unless-stopped
 
   fuji31:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji31
     ports:
       - "54031:1071"
     restart: unless-stopped
 
   fuji32:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji32
     ports:
       - "54032:1071"
     restart: unless-stopped
 
   fuji33:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji33
     ports:
       - "54033:1071"
     restart: unless-stopped
 
   fuji34:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji34
     ports:
       - "54034:1071"
     restart: unless-stopped
 
   fuji35:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji35
     ports:
       - "54035:1071"
     restart: unless-stopped
 
   fuji36:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji36
     ports:
       - "54036:1071"
     restart: unless-stopped
 
   fuji37:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji37
     ports:
       - "54037:1071"
     restart: unless-stopped
 
   fuji38:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji38
     ports:
       - "54038:1071"
     restart: unless-stopped
 
   fuji39:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji39
     ports:
       - "54039:1071"
     restart: unless-stopped
 
   fuji40:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji40
     ports:
       - "54040:1071"
     restart: unless-stopped
 
   fuji41:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji41
     ports:
       - "54041:1071"
     restart: unless-stopped
 
   fuji42:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji42
     ports:
       - "54042:1071"
     restart: unless-stopped
 
   fuji43:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji43
     ports:
       - "54043:1071"
     restart: unless-stopped
 
   fuji44:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji44
     ports:
       - "54044:1071"
     restart: unless-stopped
 
   fuji45:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji45
     ports:
       - "54045:1071"
     restart: unless-stopped
 
   fuji46:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji46
     ports:
       - "54046:1071"
     restart: unless-stopped
 
   fuji47:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji47
     ports:
       - "54047:1071"
     restart: unless-stopped
 
   fuji48:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji48
     ports:
       - "54048:1071"
     restart: unless-stopped
 
   fuji49:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji49
     ports:
       - "54049:1071"
     restart: unless-stopped
 
   fuji50:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji50
     ports:
       - "54050:1071"
     restart: unless-stopped
 
   fuji51:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji51
     ports:
       - "54051:1071"
     restart: unless-stopped
 
   fuji52:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji52
     ports:
       - "54052:1071"
     restart: unless-stopped
 
   fuji53:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji53
     ports:
       - "54053:1071"
     restart: unless-stopped
 
   fuji54:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji54
     ports:
       - "54054:1071"
     restart: unless-stopped
 
   fuji55:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji55
     ports:
       - "54055:1071"
     restart: unless-stopped
 
   fuji56:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji56
     ports:
       - "54056:1071"
     restart: unless-stopped
 
   fuji57:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji57
     ports:
       - "54057:1071"
     restart: unless-stopped
 
   fuji58:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji58
     ports:
       - "54058:1071"
     restart: unless-stopped
 
   fuji59:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji59
     ports:
       - "54059:1071"
     restart: unless-stopped
 
   fuji60:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji60
     ports:
       - "54060:1071"
     restart: unless-stopped
 
   fuji61:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji61
     ports:
       - "54061:1071"
     restart: unless-stopped
 
   fuji62:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji62
     ports:
       - "54062:1071"
     restart: unless-stopped
 
   fuji63:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji63
     ports:
       - "54063:1071"
     restart: unless-stopped
 
   fuji64:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji64
     ports:
       - "54064:1071"
     restart: unless-stopped
 
   fuji65:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji65
     ports:
       - "54065:1071"
     restart: unless-stopped
 
   fuji66:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji66
     ports:
       - "54066:1071"
     restart: unless-stopped
 
   fuji67:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji67
     ports:
       - "54067:1071"
     restart: unless-stopped
 
   fuji68:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji68
     ports:
       - "54068:1071"
     restart: unless-stopped
 
   fuji69:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji69
     ports:
       - "54069:1071"
     restart: unless-stopped
 
   fuji70:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji70
     ports:
       - "54070:1071"
     restart: unless-stopped
 
   fuji71:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji71
     ports:
       - "54071:1071"
     restart: unless-stopped
 
   fuji72:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji72
     ports:
       - "54072:1071"
     restart: unless-stopped
 
   fuji73:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji73
     ports:
       - "54073:1071"
     restart: unless-stopped
 
   fuji74:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji74
     ports:
       - "54074:1071"
     restart: unless-stopped
 
   fuji75:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji75
     ports:
       - "54075:1071"
     restart: unless-stopped
 
   fuji76:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji76
     ports:
       - "54076:1071"
     restart: unless-stopped
 
   fuji77:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji77
     ports:
       - "54077:1071"
     restart: unless-stopped
 
   fuji78:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji78
     ports:
       - "54078:1071"
     restart: unless-stopped
 
   fuji79:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji79
     ports:
       - "54079:1071"
     restart: unless-stopped
 
   fuji80:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji80
     ports:
       - "54080:1071"
     restart: unless-stopped
 
   fuji81:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji81
     ports:
       - "54081:1071"
     restart: unless-stopped
 
   fuji82:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji82
     ports:
       - "54082:1071"
     restart: unless-stopped
 
   fuji83:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji83
     ports:
       - "54083:1071"
     restart: unless-stopped
 
   fuji84:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji84
     ports:
       - "54084:1071"
     restart: unless-stopped
 
   fuji85:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji85
     ports:
       - "54085:1071"
     restart: unless-stopped
 
   fuji86:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji86
     ports:
       - "54086:1071"
     restart: unless-stopped
 
   fuji87:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji87
     ports:
       - "54087:1071"
     restart: unless-stopped
 
   fuji88:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji88
     ports:
       - "54088:1071"
     restart: unless-stopped
 
   fuji89:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji89
     ports:
       - "54089:1071"
     restart: unless-stopped
 
   fuji90:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji90
     ports:
       - "54090:1071"
     restart: unless-stopped
 
   fuji91:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji91
     ports:
       - "54091:1071"
     restart: unless-stopped
 
   fuji92:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji92
     ports:
       - "54092:1071"
     restart: unless-stopped
 
   fuji93:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji93
     ports:
       - "54093:1071"
     restart: unless-stopped
 
   fuji94:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji94
     ports:
       - "54094:1071"
     restart: unless-stopped
 
   fuji95:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji95
     ports:
       - "54095:1071"
     restart: unless-stopped
 
   fuji96:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji96
     ports:
       - "54096:1071"
     restart: unless-stopped
 
   fuji97:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji97
     ports:
       - "54097:1071"
     restart: unless-stopped
 
   fuji98:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji98
     ports:
       - "54098:1071"
     restart: unless-stopped
 
   fuji99:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji99
     ports:
       - "54099:1071"
     restart: unless-stopped
 
   fuji100:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji100
     ports:
       - "54100:1071"
     restart: unless-stopped
 
   fuji101:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji101
     ports:
       - "54101:1071"
     restart: unless-stopped
 
   fuji102:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji102
     ports:
       - "54102:1071"
     restart: unless-stopped
 
   fuji103:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji103
     ports:
       - "54103:1071"
     restart: unless-stopped
 
   fuji104:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji104
     ports:
       - "54104:1071"
     restart: unless-stopped
 
   fuji105:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji105
     ports:
       - "54105:1071"
     restart: unless-stopped
 
   fuji106:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji106
     ports:
       - "54106:1071"
     restart: unless-stopped
 
   fuji107:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji107
     ports:
       - "54107:1071"
     restart: unless-stopped
 
   fuji108:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji108
     ports:
       - "54108:1071"
     restart: unless-stopped
 
   fuji109:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji109
     ports:
       - "54109:1071"
     restart: unless-stopped
 
   fuji110:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji110
     ports:
       - "54110:1071"
     restart: unless-stopped
 
   fuji111:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji111
     ports:
       - "54111:1071"
     restart: unless-stopped
 
   fuji112:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji112
     ports:
       - "54112:1071"
     restart: unless-stopped
 
   fuji113:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji113
     ports:
       - "54113:1071"
     restart: unless-stopped
 
   fuji114:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji114
     ports:
       - "54114:1071"
     restart: unless-stopped
 
   fuji115:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji115
     ports:
       - "54115:1071"
     restart: unless-stopped
 
   fuji116:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji116
     ports:
       - "54116:1071"
     restart: unless-stopped
 
   fuji117:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji117
     ports:
       - "54117:1071"
     restart: unless-stopped
 
   fuji118:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji118
     ports:
       - "54118:1071"
     restart: unless-stopped
 
   fuji119:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji119
     ports:
       - "54119:1071"
     restart: unless-stopped
 
   fuji120:
-    image: ghcr.io/data-S-index/fuji:latest
+    image: ghcr.io/data-s-index/fuji:latest
     container_name: fuji120
     ports:
       - "54120:1071"
