@@ -22,8 +22,14 @@ model User {
     givenName  String @default("") // first name
     familyName String @default("") // last name
 
+    additionalNames String[] @default([])
+
     emailAddress String @unique
     password     String
+
+    affiliation     String?
+    homePage        String?
+    areasOfInterest String[] @default([])
 
     emailVerified                 Boolean   @default(false)
     emailVerifiedAt               DateTime?
@@ -86,7 +92,6 @@ model Dataset {
     datasetClaims UserDataset[]
 
     @@unique([identifierType, identifier])
-    @@index([title]) // for search
     @@index([identifier])
     @@index([publishedAt])
 }
@@ -106,7 +111,6 @@ model DatasetAuthor {
     created DateTime @default(now())
     updated DateTime @updatedAt
 
-    @@index([name, datasetId])
     @@index([datasetId])
 }
 
@@ -150,10 +154,8 @@ model Citation {
 }
 
 model FujiScore {
-    id Int @id @default(autoincrement())
-
+    datasetId Int     @id
     dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
-    datasetId Int     @unique
 
     score          Float? // default is null so that we can store the score later
     evaluationDate DateTime

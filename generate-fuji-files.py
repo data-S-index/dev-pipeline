@@ -8,37 +8,41 @@ from typing import Dict
 import psycopg
 from tqdm import tqdm
 
-from config import MINI_DATABASE_URL
+from config import DATABASE_URL
 
 RECORDS_PER_FILE = 10000  # Records per output file
+DB_FETCH_BATCH_SIZE = 50000  # Records to fetch from database at once
+IDENTIFIER_TO_ID_MAP_FILE = "identifier_to_id_map.ndjson"  # Mapping file name
 
 
-def load_doi_to_id_mapping(mapping_file: Path) -> Dict[str, int]:
-    """Load DOI to dataset ID mapping from NDJSON file."""
-    print("  Loading DOI to ID mapping...")
+def load_identifier_to_id_mapping(mapping_file: Path) -> Dict[str, int]:
+    """Load identifier to dataset ID mapping from NDJSON file."""
+    print("  Loading identifier to ID mapping...")
     mapping: Dict[str, int] = {}
 
     if not mapping_file.exists():
         raise FileNotFoundError(
             f"Mapping file not found: {mapping_file}. "
-            f"Please run build-doi-datasetid-map.py first to create the mapping file."
+            f"Please run build-identifier-datasetid-map.py first to create the mapping file."
         )
 
     try:
         with open(mapping_file, "r", encoding="utf-8") as f:
             for line in f:
-                if line := line.strip():
-                    record = json.loads(line)
-                    doi = record.get("doi", "").lower()
-                    dataset_id = record.get("id")
-                    if doi and dataset_id:
-                        mapping[doi] = dataset_id
-        print(f"  ✓ Loaded {len(mapping):,} DOI mappings from file")
+                line = line.strip()
+                if not line:
+                    continue
+                record = json.loads(line)
+                identifier = record.get("identifier", "").lower()
+                dataset_id = record.get("id")
+                if identifier and dataset_id:
+                    mapping[identifier] = dataset_id
+        print(f"  ✓ Loaded {len(mapping):,} identifier mappings from file")
         return mapping
     except Exception as e:
         raise RuntimeError(
             f"Error reading mapping file {mapping_file}: {e}. "
-            f"Please run build-doi-datasetid-map.py to rebuild the mapping file."
+            f"Please run build-identifier-datasetid-map.py to rebuild the mapping file."
         )
 
 
@@ -64,7 +68,7 @@ def write_batch_to_file(batch: list, file_number: int, output_dir: Path) -> None
 
 def export_scored_records(
     conn: psycopg.Connection,
-    doi_to_id: Dict[str, int],
+    identifier_to_id: Dict[str, int],
     output_dir: Path,
 ) -> None:
     """Export records with scores to NDJSON files."""
@@ -76,8 +80,9 @@ def export_scored_records(
         cur.execute(
             """
             SELECT COUNT(*)
-            FROM "Dataset"
-            WHERE score IS NOT NULL
+            FROM "FujiScore" fs
+            INNER JOIN "Dataset" d ON fs."datasetId" = d.id
+            WHERE d."identifierType" = 'doi'
             """
         )
         total_records = cur.fetchone()[0]
@@ -101,52 +106,76 @@ def export_scored_records(
             unit_scale=True,
         )
 
-        # Fetch all records
+        # Fetch records from FujiScore table joined with Dataset in batches
         cur.execute(
             """
-            SELECT id, doi, score, evaluationdate
-            FROM "Dataset"
-            WHERE score IS NOT NULL
-            ORDER BY id
+            SELECT
+                d.id,
+                d.identifier,
+                fs.score,
+                fs."evaluationDate",
+                fs."metricVersion",
+                fs."softwareVersion"
+            FROM "FujiScore" fs
+            INNER JOIN "Dataset" d ON fs."datasetId" = d.id
+            WHERE d."identifierType" = 'doi'
+            ORDER BY d.id
             """
         )
 
-        for row in cur:
-            dataset_id_db, doi, score, evaluation_date = row
+        # Process records in batches to avoid loading all 50M into memory
+        while True:
+            rows = cur.fetchmany(DB_FETCH_BATCH_SIZE)
+            if not rows:
+                break
 
-            # Try to get dataset_id from mapping file
-            doi_lower = doi.lower() if doi else None
-            dataset_id = doi_to_id.get(doi_lower) if doi_lower else None
+            for row in rows:
+                (
+                    dataset_id_db,
+                    doi,
+                    score,
+                    evaluation_date,
+                    metric_version,
+                    software_version,
+                ) = row
 
-            # Create record
-            record = {
-                "id": dataset_id or dataset_id_db,
-                "doi": doi,
-                "score": float(score) if score is not None else None,
-                "evaluationDate": (
-                    evaluation_date.isoformat() if evaluation_date else None
-                ),
-            }
+                # Try to get dataset_id from mapping file using identifier
+                identifier_lower = doi.lower() if doi else None
+                dataset_id = (
+                    identifier_to_id.get(identifier_lower) if identifier_lower else None
+                )
 
-            # Add database ID if different from mapped ID
-            if dataset_id and dataset_id != dataset_id_db:
-                record["databaseId"] = dataset_id_db
+                # Create record with all FujiScore fields
+                record = {
+                    "id": dataset_id or dataset_id_db,
+                    "doi": doi,
+                    "score": float(score) if score is not None else None,
+                    "evaluationDate": (
+                        evaluation_date.isoformat() if evaluation_date else None
+                    ),
+                    "metricVersion": metric_version,
+                    "softwareVersion": software_version,
+                }
 
-            current_batch.append(record)
-            total_processed += 1
+                # Add database ID if different from mapped ID
+                if dataset_id and dataset_id != dataset_id_db:
+                    record["databaseId"] = dataset_id_db
 
-            if dataset_id:
-                total_mapped += 1
-            else:
-                total_unmapped += 1
+                current_batch.append(record)
+                total_processed += 1
 
-            # Write batch when it reaches RECORDS_PER_FILE
-            if len(current_batch) >= RECORDS_PER_FILE:
-                write_batch_to_file(current_batch, file_number, output_dir)
-                file_number += 1
-                current_batch = []
+                if dataset_id:
+                    total_mapped += 1
+                else:
+                    total_unmapped += 1
 
-            pbar.update(1)
+                # Write batch when it reaches RECORDS_PER_FILE
+                if len(current_batch) >= RECORDS_PER_FILE:
+                    write_batch_to_file(current_batch, file_number, output_dir)
+                    file_number += 1
+                    current_batch = []
+
+                pbar.update(1)
 
         pbar.close()
 
@@ -165,15 +194,15 @@ def main() -> None:
     """Main function to export scored records to NDJSON files."""
     print("🚀 Starting Fuji scored records export...")
 
-    if not MINI_DATABASE_URL:
-        raise ValueError("MINI_DATABASE_URL not set in environment or .env file")
+    if not DATABASE_URL:
+        raise ValueError("DATABASE_URL not set in environment or .env file")
 
     # Get OS-agnostic paths (matching format-raw-data.py pattern)
     print("📍 Locating directories...")
     home_dir = Path.home()
     downloads_dir = home_dir / "Downloads"
     output_dir = downloads_dir / "database" / "fuji-score"
-    mapping_file = downloads_dir / "database" / "doi_to_id_map.ndjson"
+    mapping_file = downloads_dir / "database" / IDENTIFIER_TO_ID_MAP_FILE
 
     print(f"Output directory: {output_dir}")
     print(f"Mapping file: {mapping_file}")
@@ -191,15 +220,15 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     print("✓ Output directory ready")
 
-    # Load DOI to ID mapping
-    print("\n🗺️  Loading DOI to ID mapping...")
-    doi_to_id = load_doi_to_id_mapping(mapping_file)
+    # Load identifier to ID mapping
+    print("\n🗺️  Loading identifier to ID mapping...")
+    identifier_to_id = load_identifier_to_id_mapping(mapping_file)
 
     # Connect to database and export records
     print("\n💾 Exporting records from database...")
     try:
-        with psycopg.connect(MINI_DATABASE_URL) as conn:
-            export_scored_records(conn, doi_to_id, output_dir)
+        with psycopg.connect(DATABASE_URL) as conn:
+            export_scored_records(conn, identifier_to_id, output_dir)
 
         print("\n✅ Export completed successfully!")
         print(f"🎉 Exported files are available in: {output_dir}")
