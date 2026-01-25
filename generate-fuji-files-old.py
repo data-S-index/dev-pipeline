@@ -11,7 +11,7 @@ from tqdm import tqdm
 from config import DATABASE_URL
 
 RECORDS_PER_FILE = 10000  # Records per output file
-DB_FETCH_BATCH_SIZE = 100000  # Records to fetch from database at once (increased for slow connections)
+DB_FETCH_BATCH_SIZE = 50000  # Records to fetch from database at once
 IDENTIFIER_TO_ID_MAP_FILE = "identifier_to_id_map.ndjson"  # Mapping file name
 
 
@@ -74,9 +74,10 @@ def export_scored_records(
     """Export records with scores to NDJSON files."""
     print("  Querying database for records with scores...")
 
-    # Get total count for progress bar (use regular cursor for this)
-    with conn.cursor() as count_cur:
-        count_cur.execute(
+    # Query records with scores
+    with conn.cursor() as cur:
+        # Get total count for progress bar
+        cur.execute(
             """
             SELECT COUNT(*)
             FROM "FujiScore" fs
@@ -84,17 +85,13 @@ def export_scored_records(
             WHERE d."identifierType" = 'doi'
             """
         )
-        total_records = count_cur.fetchone()[0]
+        total_records = cur.fetchone()[0]
         print(f"  Found {total_records:,} records with scores")
 
         if total_records == 0:
             print("  ⚠️  No records with scores found")
             return
 
-    # Use a named cursor (server-side cursor) for better streaming with slow connections
-    # This reduces memory usage on the server and allows efficient streaming
-    # Named cursors fetch data in chunks, reducing network round trips
-    with conn.cursor(name="fuji_export_cursor") as cur:
         # Process records in batches
         file_number = 1
         current_batch = []
@@ -110,7 +107,6 @@ def export_scored_records(
         )
 
         # Fetch records from FujiScore table joined with Dataset in batches
-        # Using server-side cursor for efficient streaming over slow connections
         cur.execute(
             """
             SELECT
@@ -128,7 +124,6 @@ def export_scored_records(
         )
 
         # Process records in batches to avoid loading all 50M into memory
-        # Larger batches reduce round trips for slow connections
         while True:
             rows = cur.fetchmany(DB_FETCH_BATCH_SIZE)
             if not rows:
@@ -230,7 +225,6 @@ def main() -> None:
     identifier_to_id = load_identifier_to_id_mapping(mapping_file)
 
     # Connect to database and export records
-    # Optimize connection for slow network speeds
     print("\n💾 Exporting records from database...")
     try:
         with psycopg.connect(DATABASE_URL) as conn:
