@@ -7,8 +7,12 @@ from typing import Dict
 
 from tqdm import tqdm
 
+from identifier_mapping import IDENTIFIER_TO_ID_MAP_DIR
 
-IDENTIFIER_TO_ID_MAP_FILE = "identifier_to_id_map.ndjson"  # Intermediate mapping file
+# Total record count for progress bar (dataset size)
+TOTAL_RECORDS = 49061167
+# Max records per output NDJSON file
+RECORDS_PER_FILE = 50000
 
 
 def natural_sort_key(path: Path) -> tuple:
@@ -21,18 +25,21 @@ def natural_sort_key(path: Path) -> tuple:
 
 
 def build_identifier_to_id_mapping(
-    dataset_dir: Path, mapping_file: Path
+    dataset_dir: Path, mapping_dir: Path
 ) -> Dict[str, int]:
-    """Build identifier to ID mapping from processed dataset NDJSON files and save to file.
+    """Build identifier to ID mapping from processed dataset NDJSON files and save to multiple NDJSON files.
 
+    Writes NDJSON files named 1.ndjson, 2.ndjson, 3.ndjson, ... with up to RECORDS_PER_FILE records each.
     Reads the already-processed dataset files which contain id and identifier fields.
     """
     print("  Building identifier to ID mapping...")
 
-    # Remove mapping file if it exists
-    if mapping_file.exists():
-        mapping_file.unlink()
-        print(f"  ✓ Removed existing mapping file: {mapping_file}")
+    # Remove mapping directory if it exists and recreate it
+    if mapping_dir.exists():
+        for p in mapping_dir.glob("*.ndjson"):
+            p.unlink()
+        print(f"  ✓ Removed existing mapping files in {mapping_dir}")
+    mapping_dir.mkdir(parents=True, exist_ok=True)
 
     # Check if dataset directory exists
     if not dataset_dir.exists():
@@ -45,8 +52,7 @@ def build_identifier_to_id_mapping(
     # Sort by filename using natural sort (alphabetical then numerical)
     dataset_files = []
     for file_path in dataset_dir.glob("*.ndjson"):
-        if file_path.stem.startswith("datacite-") or file_path.stem.startswith("emdb-"):
-            dataset_files.append(file_path)
+        dataset_files.append(file_path)
     dataset_files = sorted(dataset_files, key=natural_sort_key)
 
     if not dataset_files:
@@ -57,83 +63,98 @@ def build_identifier_to_id_mapping(
 
     print(f"  Found {len(dataset_files)} dataset file(s) to process")
 
-    # Count total records first for progress bar
-    print("  Counting records in dataset files...")
-    total_records = 0
-    for file_path in tqdm(
-        dataset_files, desc="  Counting records", unit="file", leave=False
-    ):
-        try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    # Only count valid JSON records
-                    try:
-                        json.loads(line)
-                        total_records += 1
-                    except json.JSONDecodeError:
-                        continue
-        except Exception:
-            continue
-
-    # Process files to build mapping
+    # Process files to build mapping; write NDJSON files 1.ndjson, 2.ndjson, ... (max RECORDS_PER_FILE each)
     mapping: Dict[str, int] = {}
     duplicate_count = 0
     conflict_count = 0
     duplicate_identifiers = set()
     conflict_details = []
     pbar = tqdm(
-        total=total_records, desc="  Building mapping", unit="record", unit_scale=True
+        total=TOTAL_RECORDS, desc="  Building mapping", unit="record", unit_scale=True
     )
 
-    for file_path in dataset_files:
-        try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    try:
-                        record = json.loads(line)
-                    except json.JSONDecodeError as e:
-                        tqdm.write(
-                            f"    ⚠️  Error parsing line in {file_path.name}: {e}"
-                        )
-                        continue
+    out_index = 1
+    records_in_current_file = 0
+    current_out_file = open(mapping_dir / f"{out_index}.ndjson", "w", encoding="utf-8")
 
-                    try:
+    try:
+        for file_path in dataset_files:
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        try:
+                            record = json.loads(line)
+                        except json.JSONDecodeError as e:
+                            tqdm.write(
+                                f"    ⚠️  Error parsing line in {file_path.name}: {e}"
+                            )
+                            continue
+
                         dataset_id = record.get("id")
                         identifier = record.get("identifier")
 
-                        if dataset_id and identifier:
-                            identifier_lower = identifier.lower()
-                            # Check for duplicates and conflicts
-                            if identifier_lower in mapping:
-                                duplicate_count += 1
-                                duplicate_identifiers.add(identifier_lower)
-                                # Check if it's a conflict (different dataset_id)
-                                if mapping[identifier_lower] != dataset_id:
-                                    conflict_count += 1
-                                    conflict_details.append(
-                                        {
-                                            "identifier": identifier_lower,
-                                            "existing_id": mapping[identifier_lower],
-                                            "new_id": dataset_id,
-                                            "file": file_path.name,
-                                        }
-                                    )
-                            else:
-                                # Store mapping (first occurrence)
-                                mapping[identifier_lower] = dataset_id
-                    except (KeyError, TypeError):
-                        pass
+                        if not identifier and "doi" in record:
+                            identifier = record.get("doi")
+                        if dataset_id is None and "datasetId" in record:
+                            dataset_id = record.get("datasetId")
+                        if not dataset_id or not identifier:
+                            continue
+                        try:
+                            identifier_lower = (
+                                identifier.lower()
+                                if isinstance(identifier, str)
+                                else str(identifier).strip().lower()
+                            )
+                            if not identifier_lower:
+                                continue
+                            dataset_id = int(dataset_id)
+                        except (TypeError, ValueError):
+                            continue
 
-                    pbar.update(1)
-        except FileNotFoundError as e:
-            tqdm.write(f"    ⚠️  Error reading {file_path.name}: {e}")
-            continue
+                        # Write one record to current output file
+                        current_out_file.write(
+                            json.dumps(
+                                {"identifier": identifier_lower, "id": dataset_id},
+                                ensure_ascii=False,
+                            )
+                            + "\n"
+                        )
+                        records_in_current_file += 1
+                        if records_in_current_file >= RECORDS_PER_FILE:
+                            current_out_file.close()
+                            out_index += 1
+                            current_out_file = open(
+                                mapping_dir / f"{out_index}.ndjson",
+                                "w",
+                                encoding="utf-8",
+                            )
+                            records_in_current_file = 0
+
+                        # Track first occurrence globally for duplicate/conflict stats
+                        if identifier_lower in mapping:
+                            duplicate_count += 1
+                            duplicate_identifiers.add(identifier_lower)
+                            if mapping[identifier_lower] != dataset_id:
+                                conflict_count += 1
+                                conflict_details.append(
+                                    {
+                                        "identifier": identifier_lower,
+                                        "existing_id": mapping[identifier_lower],
+                                        "new_id": dataset_id,
+                                        "file": file_path.name,
+                                    }
+                                )
+                        else:
+                            mapping[identifier_lower] = dataset_id
+
+                        pbar.update(1)
+            except FileNotFoundError as e:
+                tqdm.write(f"    ⚠️  Error reading {file_path.name}: {e}")
+    finally:
+        current_out_file.close()
 
     pbar.close()
 
@@ -161,21 +182,11 @@ def build_identifier_to_id_mapping(
     else:
         print("  ✓ No duplicate identifiers found")
 
-    # Save mapping to file in NDJSON format
-    print(f"  💾 Saving mapping to {mapping_file}...")
-    with tqdm(
-        total=len(mapping),
-        desc="  Saving mapping",
-        unit="record",
-        leave=False,
-        unit_scale=True,
-    ) as save_pbar:
-        with open(mapping_file, "w", encoding="utf-8") as f:
-            for identifier, dataset_id in mapping.items():
-                record = {"identifier": identifier, "id": dataset_id}
-                f.write(json.dumps(record, ensure_ascii=False) + "\n")
-                save_pbar.update(1)
-    print(f"  ✓ Saved {len(mapping):,} identifier mappings")
+    # Summary: mapping was written to 1.ndjson, 2.ndjson, ... (max 50k records each)
+    num_files = len(list(mapping_dir.glob("*.ndjson")))
+    print(
+        f"  ✓ Wrote {num_files} NDJSON file(s) to {mapping_dir} ({len(mapping):,} total identifier mappings)"
+    )
 
     return mapping
 
@@ -191,21 +202,21 @@ def main() -> None:
     home_dir = Path.home()
     downloads_dir = home_dir / "Downloads"
     dataset_dir = downloads_dir / "database" / dataset_folder_name
-    mapping_file = downloads_dir / "database" / IDENTIFIER_TO_ID_MAP_FILE
+    mapping_dir = downloads_dir / "database" / IDENTIFIER_TO_ID_MAP_DIR
 
     print(f"Reading dataset files from: {dataset_dir}")
-    print(f"Mapping file: {mapping_file}")
+    print(f"Mapping output directory: {mapping_dir}")
 
-    # Ensure mapping file directory exists
-    mapping_file.parent.mkdir(parents=True, exist_ok=True)
+    # Ensure mapping directory exists
+    mapping_dir.mkdir(parents=True, exist_ok=True)
 
     # Build or load identifier to ID mapping
     print("\n🗺️  Building/loading identifier to ID mapping...")
-    identifier_to_id = build_identifier_to_id_mapping(dataset_dir, mapping_file)
+    identifier_to_id = build_identifier_to_id_mapping(dataset_dir, mapping_dir)
     print(f"  ✓ Mapping contains {len(identifier_to_id):,} identifier entries")
 
     print("\n✅ Identifier to ID mapping build completed successfully!")
-    print(f"🎉 Mapping file is available at: {mapping_file}")
+    print(f"🎉 Mapping files are in: {mapping_dir}")
 
 
 if __name__ == "__main__":

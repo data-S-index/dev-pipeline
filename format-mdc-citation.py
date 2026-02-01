@@ -9,9 +9,12 @@ from typing import Any, Dict, List, Optional
 
 from tqdm import tqdm
 
+from identifier_mapping import (
+    IDENTIFIER_TO_ID_MAP_DIR,
+    load_identifier_to_id_mapping_from_dir,
+)
 
 CITATIONS_PER_FILE = 10000  # Citations per output file
-IDENTIFIER_TO_ID_MAP_FILE = "identifier_to_id_map.ndjson"  # Intermediate mapping file
 
 
 def clean_string(s: Optional[str]) -> str:
@@ -252,12 +255,12 @@ def main() -> None:
     ndjson_file = downloads_dir / ndjson_file_name
     dataset_dir = downloads_dir / "database" / dataset_folder_name
     output_dir = downloads_dir / "database" / output_folder_name
-    mapping_file = downloads_dir / "database" / IDENTIFIER_TO_ID_MAP_FILE
+    mapping_dir = downloads_dir / "database" / IDENTIFIER_TO_ID_MAP_DIR
 
     print(f"Reading NDJSON file: {ndjson_file}")
     print(f"Reading dataset files from: {dataset_dir}")
     print(f"Output directory: {output_dir}")
-    print(f"Mapping file: {mapping_file}")
+    print(f"Mapping directory: {mapping_dir}")
 
     # Check if NDJSON file exists
     if not ndjson_file.exists():
@@ -280,37 +283,23 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     print("✓ Created output directory")
 
-    # Ensure mapping file directory exists
-    mapping_file.parent.mkdir(parents=True, exist_ok=True)
+    # Ensure mapping directory exists
+    mapping_dir.mkdir(parents=True, exist_ok=True)
 
-    # Step 2: Load identifier to ID mapping
+    # Step 2: Load identifier to ID mapping (one NDJSON per dataset file; progress by file count)
     print("\n🗺️  Step 2: Loading identifier to ID mapping...")
-    if not mapping_file.exists():
-        raise FileNotFoundError(
-            f"Mapping file not found: {mapping_file}. "
-            f"Please run build-identifier-datasetid-map.py first to create the mapping file."
-        )
-
     start_time = time.perf_counter()
     try:
-        identifier_to_id: Dict[str, int] = {}
-        with open(mapping_file, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                record = json.loads(line)
-                identifier = record.get("identifier", "").lower()
-                dataset_id = record.get("id")
-                if identifier and dataset_id:
-                    identifier_to_id[identifier] = dataset_id
+        identifier_to_id = load_identifier_to_id_mapping_from_dir(mapping_dir)
         elapsed_time = time.perf_counter() - start_time
-        print(f"  ✓ Loaded {len(identifier_to_id):,} identifier mappings from file")
+        print(f"  ✓ Loaded {len(identifier_to_id):,} identifier mappings")
         print(f"  ⏱️  Time taken: {elapsed_time:.2f} seconds")
+    except FileNotFoundError:
+        raise
     except Exception as e:
         raise RuntimeError(
-            f"Error reading mapping file {mapping_file}: {e}. "
-            f"Please run build-identifier-datasetid-map.py to rebuild the mapping file."
+            f"Error reading mapping from {mapping_dir}: {e}. "
+            f"Please run build-identifier-datasetid-map.py to rebuild the mapping."
         )
 
     # Step 3: Count total citations

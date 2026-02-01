@@ -91,8 +91,6 @@ def clean_authors(record: Dict[str, Any]) -> List[Dict[str, Any]]:
 def parse_datacite_record(record: Dict[str, Any], dataset_id: int) -> Dict[str, Any]:
     """Parse a datacite record into dataset format (db insert ready)."""
     source = record.get("source", "")
-    doi = record.get("doi", "")
-    doi = doi.lower() if doi else None
     title = record.get("title", "")
     description = (
         clean_string(record.get("description")) if record.get("description") else None
@@ -135,11 +133,16 @@ def parse_datacite_record(record: Dict[str, Any], dataset_id: int) -> Dict[str, 
     else:
         identifiers = []
 
+    main_identifier = identifiers[0].get("identifier", "")
+    main_identifier_type = identifiers[0].get("identifierType", "")
+    if main_identifier_type in ["doi", "emdb_id"]:
+        main_identifier = main_identifier.lower()
+
     return {
         "id": dataset_id,
         "source": source,
-        "identifier": doi,
-        "identifierType": "doi",
+        "identifier": main_identifier,
+        "identifierType": main_identifier_type,
         "title": title,
         "extractedIdentifiers": identifiers,
         "description": description,

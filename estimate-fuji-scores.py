@@ -9,10 +9,13 @@ import psycopg
 from tqdm import tqdm
 
 from config import DATABASE_URL
+from identifier_mapping import (
+    IDENTIFIER_TO_ID_MAP_DIR,
+    load_identifier_to_id_mapping_from_dir,
+)
 
 RECORDS_PER_FILE = 10000  # Records per output file
 DB_FETCH_BATCH_SIZE = 50000  # Records to fetch from database at once
-IDENTIFIER_TO_ID_MAP_FILE = "identifier_to_id_map.ndjson"  # Mapping file name
 
 
 def extract_doi_prefix(doi: str) -> Optional[str]:
@@ -26,37 +29,6 @@ def extract_doi_prefix(doi: str) -> Optional[str]:
         return doi[:slash_index]
     # If no slash found, return the whole DOI as prefix
     return doi
-
-
-def load_identifier_to_id_mapping(mapping_file: Path) -> Dict[str, int]:
-    """Load identifier to dataset ID mapping from NDJSON file."""
-    print("  Loading identifier to ID mapping...")
-    mapping: Dict[str, int] = {}
-
-    if not mapping_file.exists():
-        raise FileNotFoundError(
-            f"Mapping file not found: {mapping_file}. "
-            f"Please run build-identifier-datasetid-map.py first to create the mapping file."
-        )
-
-    try:
-        with open(mapping_file, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                record = json.loads(line)
-                identifier = record.get("identifier", "").lower()
-                dataset_id = record.get("id")
-                if identifier and dataset_id:
-                    mapping[identifier] = dataset_id
-        print(f"  ✓ Loaded {len(mapping):,} identifier mappings from file")
-        return mapping
-    except Exception as e:
-        raise RuntimeError(
-            f"Error reading mapping file {mapping_file}: {e}. "
-            f"Please run build-identifier-datasetid-map.py to rebuild the mapping file."
-        )
 
 
 def load_prefix_distributions(
@@ -316,12 +288,12 @@ def main() -> None:
     downloads_dir = home_dir / "Downloads"
     source_dir = downloads_dir / "database" / "fuji-score"
     output_dir = downloads_dir / "database" / "fuji-score-estimated"
-    mapping_file = downloads_dir / "database" / IDENTIFIER_TO_ID_MAP_FILE
+    mapping_dir = downloads_dir / "database" / IDENTIFIER_TO_ID_MAP_DIR
     distribution_file = downloads_dir / "database" / "fuji-score-distribution.json"
 
     print(f"Source directory: {source_dir}")
     print(f"Output directory: {output_dir}")
-    print(f"Mapping file: {mapping_file}")
+    print(f"Mapping directory: {mapping_dir}")
     print(f"Distribution file: {distribution_file}")
 
     # Clean output directory
@@ -339,7 +311,8 @@ def main() -> None:
 
     # Load identifier to ID mapping
     print("\n🗺️  Loading identifier to ID mapping...")
-    identifier_to_id = load_identifier_to_id_mapping(mapping_file)
+    identifier_to_id = load_identifier_to_id_mapping_from_dir(mapping_dir)
+    print(f"  ✓ Loaded {len(identifier_to_id):,} identifier mappings")
 
     # Load prefix distributions
     print("\n📊 Loading prefix distributions...")
