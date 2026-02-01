@@ -1,4 +1,4 @@
-"""Build Meilisearch index from dataset NDJSON files."""
+"""Build Meilisearch index from automated user (author) NDJSON files."""
 
 import json
 import re
@@ -32,11 +32,11 @@ def load_ndjson_files(directory: Path) -> List[Path]:
     return sorted(files, key=natural_sort_key)
 
 
-def process_ndjson_files(index, dataset_dir: Path) -> int:
+def process_ndjson_files(index, authors_dir: Path) -> int:
     """Process ndjson files and add documents to Meilisearch index."""
-    print("📦 Processing dataset files...")
+    print("📦 Processing automated user (author) files...")
 
-    ndjson_files = load_ndjson_files(dataset_dir)
+    ndjson_files = load_ndjson_files(authors_dir)
 
     if not ndjson_files:
         print("  ⚠️  No ndjson files found")
@@ -45,17 +45,17 @@ def process_ndjson_files(index, dataset_dir: Path) -> int:
     print(f"  Found {len(ndjson_files)} ndjson file(s)")
 
     # Count total records
-    total_records = 49061167
-    # for file_path in tqdm(ndjson_files, desc="  Counting", unit="file", leave=False):
-    #     try:
-    #         with open(file_path, "r", encoding="utf-8") as f:
-    #             for line in f:
-    #                 if line.strip():
-    #                     total_records += 1
-    #     except Exception:
-    #         continue
+    total_records = 0
+    for file_path in tqdm(ndjson_files, desc="  Counting", unit="file", leave=False):
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.strip():
+                        total_records += 1
+        except Exception:
+            continue
 
-    print(f"  Processing {total_records:,} dataset records...")
+    print(f"  Processing {total_records:,} automated user records...")
 
     # Batch storage
     documents: List[Dict[str, Any]] = []
@@ -80,7 +80,6 @@ def process_ndjson_files(index, dataset_dir: Path) -> int:
                     try:
                         record: Dict[str, Any] = json.loads(line)
 
-                        # Use the record as-is, but ensure it has an id field
                         # Meilisearch requires a primary key field
                         if "id" not in record:
                             tqdm.write(
@@ -89,16 +88,11 @@ def process_ndjson_files(index, dataset_dir: Path) -> int:
                             pbar.update(1)
                             continue
 
-                        record_id = record.get("id")
-                        authors = record.get("authors", [])
-                        author_names = [author.get("name", "") for author in authors]
                         search_record = {
-                            "id": record_id,
-                            "identifier": record.get("identifier"),
-                            "title": record.get("title"),
-                            "publishedAt": record.get("publishedAt"),
-                            "subjects": record.get("subjects"),
-                            "authors": author_names,
+                            "id": record.get("id"),
+                            "name": record.get("name"),
+                            "nameIdentifiers": record.get("nameIdentifiers", []),
+                            "affiliations": record.get("affiliations", []),
                         }
 
                         documents.append(search_record)
@@ -148,23 +142,23 @@ def process_ndjson_files(index, dataset_dir: Path) -> int:
 
 
 def main() -> None:
-    """Main function to build Meilisearch index from dataset files."""
-    print("🚀 Starting Meilisearch index build process...")
+    """Main function to build Meilisearch index from automated user (author) files."""
+    print("🚀 Starting Meilisearch automated-users index build...")
 
     print(f"Meilisearch URL: {SEARCH_API_URL}")
 
-    # Locate data directory
+    # Locate data directory (same layout as datasets: database/authors from generate-authors.py)
     home_dir = Path.home()
     downloads_dir = home_dir / "Downloads"
-    dataset_dir = downloads_dir / "database" / "dataset"
+    authors_dir = downloads_dir / "database" / "authors"
 
-    print(f"Dataset directory: {dataset_dir}")
+    print(f"Authors directory: {authors_dir}")
 
     # Check directory exists
-    if not dataset_dir.exists():
+    if not authors_dir.exists():
         raise FileNotFoundError(
-            f"Dataset directory not found: {dataset_dir}. "
-            f"Please run format-raw-data.py first."
+            f"Authors directory not found: {authors_dir}. "
+            f"Please run generate-authors.py first."
         )
 
     # Connect to Meilisearch
@@ -179,26 +173,25 @@ def main() -> None:
         )
 
         # Delete index if it exists, then create a new one
-        print("\n📇 Setting up 'dataset' index...")
+        index_name = "automated-user"
+        print(f"\n📇 Setting up '{index_name}' index...")
         try:
-            # Try to delete existing index
-            client.delete_index("dataset")
+            client.delete_index(index_name)
             print("  🗑️  Deleted existing index")
         except Exception:
-            # Index doesn't exist, which is fine
             print("  ℹ️  No existing index to delete")
 
         # Create new index with primary key
-        client.create_index("dataset", {"primaryKey": "id"})
+        client.create_index(index_name, {"primaryKey": "id"})
         print("  ✅ Index created with primary key 'id'")
         print("  ✅ Index ready")
 
-        index = client.index("dataset")
+        index = client.index(index_name)
 
         # Process and add documents
-        document_count = process_ndjson_files(index, dataset_dir)
+        document_count = process_ndjson_files(index, authors_dir)
 
-        print("\n✅ Meilisearch index build completed successfully!")
+        print("\n✅ Meilisearch automated-users index build completed successfully!")
         print("📊 Summary:")
         print(f"  - Documents indexed: {document_count:,}")
 

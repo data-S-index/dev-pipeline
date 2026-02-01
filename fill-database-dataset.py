@@ -2,18 +2,57 @@
 
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Dict, Any
-
 import psycopg
 from tqdm import tqdm
 
 from config import DATABASE_URL
 
-
 # Batch size for processing
 BATCH_SIZE = 1000
+
+# Matches a trailing ISO8601 offset like +05:30 or -22:00
+TZ_OFFSET_RE = re.compile(r"([+-])(\d{2}):(\d{2})$")
+
+EPOCH_FALLBACK = datetime(1970, 1, 1, tzinfo=timezone.utc)
+
+
+def parse_published_at(value) -> datetime:
+    """Parse publishedAt from record (ISO string or None).
+    Invalid timezone offsets are stripped and treated as UTC.
+    """
+    if value is None:
+        return EPOCH_FALLBACK
+
+    if isinstance(value, datetime):
+        return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+
+    if not isinstance(value, str):
+        return EPOCH_FALLBACK
+
+    s = value.strip()
+    if not s:
+        return EPOCH_FALLBACK
+
+    # Normalize Z → +00:00
+    if s.endswith("Z"):
+        s = f"{s[:-1]}+00:00"
+
+    # Detect invalid timezone offsets (outside ±14:00)
+    m = TZ_OFFSET_RE.search(s)
+    if m:
+        _, hh, mm = m.groups()
+        if int(hh) > 14:
+            # strip the offset and assume UTC
+            s = s[:-6]
+
+    try:
+        dt = datetime.fromisoformat(s)
+        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    except (ValueError, TypeError):
+        return EPOCH_FALLBACK
 
 
 def natural_sort_key(path: Path) -> tuple:
@@ -43,7 +82,7 @@ def insert_datasets_batch(
         # Insert datasets
         if dataset_rows:
             with cur.copy(
-                """COPY "Dataset" (id, source, identifier, "identifierType", url, title, description, version, publisher, "publishedAt", domain, subjects, "created", "updated")
+                """COPY "Dataset" (id, source, identifier, "identifierType", url, title, description, version, publisher, "publishedAt", subjects, "created", "updated")
                    FROM STDIN"""
             ) as copy:
                 for row in dataset_rows:
@@ -141,13 +180,12 @@ def process_ndjson_files(
                         description = record.get("description")
                         version = record.get("version")
                         publisher = record.get("publisher")
-                        published_at = record.get("publishedAt")
+                        published_at = parse_published_at(record.get("publishedAt"))
                         subjects = record.get("subjects", [])
                         if not isinstance(subjects, list):
                             subjects = []
 
-                        # Prepare dataset row
-                        # id, source, identifier, identifierType, url, title, description, version, publisher, publishedAt, domain, subjects
+                        # Prepare dataset row (matches Prisma Dataset: no domain)
                         dataset_row = (
                             dataset_id,
                             source,
@@ -159,7 +197,6 @@ def process_ndjson_files(
                             version,
                             publisher,
                             published_at,
-                            None,  # domain
                             subjects,
                             datetime.now(),  # created
                             datetime.now(),  # updated

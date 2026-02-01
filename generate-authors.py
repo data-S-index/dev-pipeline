@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from tqdm import tqdm
+from ulid import ULID
 
 
 AUTHORS_PER_FILE = 10_000
@@ -37,9 +38,10 @@ def _normalize_affiliations(affiliations: List[str]) -> tuple:
 def author_canonical_key(author: Dict[str, Any]) -> str:
     """Canonical key for deduplication. Split by: (1) name, (2) identifiers, (3) affiliation.
     Same name → one group; within that, different identifiers → different authors; remainder split by affiliation.
+    Name is lowercased so case variants (e.g. Müller vs müller) dedupe together.
     """
     name_type = author.get("nameType", "")
-    name = author.get("name", "")
+    name = (author.get("name") or "").lower()
     identifiers = _normalize_identifiers(author.get("nameIdentifiers", []) or [])
     affiliations = _normalize_affiliations(author.get("affiliations", []) or [])
     return json.dumps(
@@ -87,6 +89,7 @@ def collect_unique_authors_with_datasets(
     result: List[Dict[str, Any]] = []
     for author, dataset_ids in author_map.values():
         out = dict(author)
+        out["id"] = str(ULID())
         out["datasetIds"] = sorted(dataset_ids)
         result.append(out)
     return result
@@ -100,7 +103,6 @@ def write_author_batches(
     """Write authors to NDJSON files with at most authors_per_file per file. Returns file count."""
     output_dir.mkdir(parents=True, exist_ok=True)
     file_number = 0
-    author_id = 1
     for i in range(0, len(authors), authors_per_file):
         batch = authors[i : i + authors_per_file]
         file_number += 1
@@ -108,8 +110,6 @@ def write_author_batches(
         with open(file_path, "w", encoding="utf-8") as f:
             for author in batch:
                 out = dict(author)
-                out["id"] = author_id
-                author_id += 1
                 f.write(json.dumps(out, ensure_ascii=False) + "\n")
     return file_number
 
