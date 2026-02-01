@@ -171,7 +171,7 @@ def main() -> None:
         )
 
         # Delete index if it exists, then create a new one
-        index_name = "automated-organizations"
+        index_name = "automated-organization"
         print(f"\n📇 Setting up '{index_name}' index...")
         try:
             client.delete_index(index_name)
