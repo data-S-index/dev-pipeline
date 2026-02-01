@@ -71,7 +71,7 @@ def clean_authors(record: Dict[str, Any]) -> List[Dict[str, Any]]:
             if isinstance(author, dict):
                 name_type = author.get("name_type", "")
                 name = author.get("name", "")
-                name_identifiers = author.get("nameIdentifiers", [])
+                name_identifiers = author.get("identifiers", [])
                 affiliations = author.get("affiliations", [])
 
                 cleaned_author = {

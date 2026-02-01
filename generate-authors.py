@@ -18,21 +18,33 @@ def natural_sort_key(path: Path) -> tuple:
     return tuple(int(part) if part.isdigit() else part.lower() for part in parts)
 
 
+def _normalize_identifiers(identifiers: List[str]) -> tuple:
+    """Normalize nameIdentifiers for comparison: strip, drop empty, sort."""
+    if not identifiers:
+        return ()
+    cleaned = [s.strip() for s in identifiers if s and isinstance(s, str)]
+    return tuple(sorted(cleaned))
+
+
+def _normalize_affiliations(affiliations: List[str]) -> tuple:
+    """Normalize affiliation list for comparison: strip, drop empty, sort."""
+    if not affiliations:
+        return ()
+    cleaned = [s.strip() for s in affiliations if s and isinstance(s, str)]
+    return tuple(sorted(cleaned))
+
+
 def author_canonical_key(author: Dict[str, Any]) -> str:
-    """Return a canonical string for deduplication (order-independent where possible)."""
-    # Normalize list order for nameIdentifiers and affiliations so same author = same key
+    """Canonical key for deduplication. Split by: (1) name, (2) identifiers, (3) affiliation.
+    Same name → one group; within that, different identifiers → different authors; remainder split by affiliation.
+    """
     name_type = author.get("nameType", "")
     name = author.get("name", "")
-    identifiers = tuple(sorted(author.get("nameIdentifiers", []) or []))
-    affiliations = tuple(sorted(author.get("affiliations", []) or []))
+    identifiers = _normalize_identifiers(author.get("nameIdentifiers", []) or [])
+    affiliations = _normalize_affiliations(author.get("affiliations", []) or [])
     return json.dumps(
-        {
-            "nameType": name_type,
-            "name": name,
-            "nameIdentifiers": identifiers,
-            "affiliations": affiliations,
-        },
-        sort_keys=True,
+        [name_type, name, list(identifiers), list(affiliations)],
+        sort_keys=False,
         ensure_ascii=False,
     )
 
@@ -88,13 +100,17 @@ def write_author_batches(
     """Write authors to NDJSON files with at most authors_per_file per file. Returns file count."""
     output_dir.mkdir(parents=True, exist_ok=True)
     file_number = 0
+    author_id = 1
     for i in range(0, len(authors), authors_per_file):
         batch = authors[i : i + authors_per_file]
         file_number += 1
         file_path = output_dir / f"author-{file_number}.ndjson"
         with open(file_path, "w", encoding="utf-8") as f:
             for author in batch:
-                f.write(json.dumps(author, ensure_ascii=False) + "\n")
+                out = dict(author)
+                out["id"] = author_id
+                author_id += 1
+                f.write(json.dumps(out, ensure_ascii=False) + "\n")
     return file_number
 
 
@@ -132,6 +148,11 @@ def main() -> None:
     if not unique_authors:
         print("  No authors to write.")
         return
+
+    unique_authors.sort(
+        key=lambda a: (a.get("name", "").lower(), a.get("nameType", ""))
+    )
+    print("  Sorted by name")
 
     file_count = write_author_batches(unique_authors, output_dir, AUTHORS_PER_FILE)
     print(f"  Wrote {file_count} file(s) (~{AUTHORS_PER_FILE:,} authors per file)")
