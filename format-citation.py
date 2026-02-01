@@ -1,4 +1,4 @@
-"""Process citations from MDC NDJSON file and create NDJSON files with citation records."""
+"""Process citations from NDJSON (datacite/mdc/openalex) and create NDJSON files with citation records."""
 
 import contextlib
 import json
@@ -42,22 +42,23 @@ def clean_string(s: Optional[str]) -> str:
     return cleaned
 
 
-def extract_citation_from_mdc_record(
+def extract_citation_from_record(
     record: Dict[str, Any], identifier_to_id: Dict[str, int]
 ) -> Optional[Dict[str, Any]]:
-    """Extract a single citation from an MDC citation record.
+    """Extract a single citation from a citation record (datacite/mdc/openalex).
 
-    MDC record format:
+    Record format (supports both "doi" and "dataset_id" for citing dataset):
     {
-        "doi": "10.3886/icpsr36361",  # Citing dataset identifier (key is "doi" but value is identifier)
-        "source": ["mdc"],
-        "citation_link": "https://doi.org/10.2105/ajph.2017.303743",  # Cited DOI
-        "citation_date": "2017-06-01T00:00:00+00:00",
-        "citation_weight": 1.26
+        "dataset_id": "10.5517/ccs6ckw",  # or "doi"
+        "source": ["datacite", "mdc", "openalex"],
+        "citation_link": "https://doi.org/10.1039/b916280c",
+        "citation_weight": 1.0,
+        "citation_date": "2009-01-01T00:00:00",
+        "placeholder_date": false
     }
     """
-    # Get the identifier of the citing dataset (key is "doi" but value is actually identifier)
-    citing_identifier = record.get("doi")
+    # Citing dataset identifier: accept "dataset_id" (current format) or "doi" (legacy)
+    citing_identifier = record.get("dataset_id") or record.get("doi")
     if not citing_identifier:
         return None
 
@@ -104,20 +105,34 @@ def extract_citation_from_mdc_record(
     if weight_value is not None:
         with contextlib.suppress(ValueError, TypeError):
             citation_weight = float(weight_value)
-    # Determine source flags
+    # Build source list (lowercase): ["datacite", "mdc", "openalex"]
     source = record.get("source", [])
-    if not isinstance(source, list):
-        source = []
+    if isinstance(source, list):
+        source_list = [s.lower() for s in source if isinstance(s, str)]
+    else:
+        source_list = []
+
+    mdc = "mdc" in source_list
+    datacite = "datacite" in source_list
+    openalex = "openalex" in source_list
+
+    # citation_date: ISO string or None
+    if cited_date:
+        citation_date_str = (
+            cited_date.replace("+00:00", "") if isinstance(cited_date, str) else None
+        )
+    else:
+        citation_date_str = datetime.now().isoformat()  # today's date
 
     return {
         "datasetId": citing_dataset_id,
-        "identifier": citing_identifier_lower,  # Source identifier (citing dataset)
-        "citationLink": cited_link_cleaned,  # Target link (cited, cleaned for URL safety)
-        "datacite": False,
-        "mdc": True,
-        "openAlex": False,
-        "citedDate": cited_date,
+        "identifier": citing_identifier_lower,
+        "citationLink": cited_link_cleaned,
+        "datacite": datacite,
+        "mdc": mdc,
+        "openAlex": openalex,
         "citationWeight": citation_weight,
+        "citedDate": citation_date_str,
     }
 
 
@@ -153,10 +168,10 @@ def count_total_citations(ndjson_file: Path) -> int:
                     continue
                 with contextlib.suppress(json.JSONDecodeError, KeyError, TypeError):
                     record = json.loads(line)
-                    # Each line is one citation record
-                    if record.get("doi") and (
-                        record.get("citation_link") or record.get("citationLink")
-                    ):
+                    # Each line is one citation record (dataset_id or doi + citation_link)
+                    has_citing = record.get("dataset_id") or record.get("doi")
+                    has_link = record.get("citation_link") or record.get("citationLink")
+                    if has_citing and has_link:
                         total_citations += 1
                 pbar.update(1)
     pbar.close()
@@ -202,9 +217,7 @@ def process_citations(
 
                 try:
                     record = json.loads(line)
-                    citation = extract_citation_from_mdc_record(
-                        record, identifier_to_id
-                    )
+                    citation = extract_citation_from_record(record, identifier_to_id)
 
                     if citation:
                         current_batch.append(citation)
@@ -241,10 +254,10 @@ def process_citations(
 
 
 def main() -> None:
-    """Main function to process citations from MDC NDJSON file."""
+    """Main function to process citations from NDJSON (datacite/mdc/openalex)."""
     print("🚀 Starting citation processing...")
 
-    ndjson_file_name = "citations-mdc-full-with-weight.ndjson"
+    ndjson_file_name = "citations.ndjson"
     dataset_folder_name = "dataset"
     output_folder_name = "citations"
 
