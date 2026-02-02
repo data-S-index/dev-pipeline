@@ -1,4 +1,4 @@
-"""Process topics from NDJSON (topics_enhanced) and create NDJSON files with topic records."""
+"""Process topics from NDJSON files in topics_split directory and create NDJSON files with topic records."""
 
 import json
 import time
@@ -18,7 +18,7 @@ TOPICS_PER_FILE = 10000  # Topics per output file
 def extract_topic_from_record(
     record: Dict[str, Any], identifier_to_id: Dict[str, int]
 ) -> Optional[Dict[str, Any]]:
-    """Extract a single topic from a topics_enhanced record.
+    """Extract a single topic from a topics split record.
 
     Record format:
     {
@@ -81,44 +81,34 @@ def extract_topic_from_record(
     }
 
 
-def count_total_topics(ndjson_file: Path) -> int:
-    """Count total number of topic records in NDJSON file (for progress bar)."""
+def get_ndjson_files(input_dir: Path) -> List[Path]:
+    """Return sorted list of .ndjson files in input directory."""
+    if not input_dir.exists() or not input_dir.is_dir():
+        return []
+    files = sorted(input_dir.glob("*.ndjson"))
+    return files
+
+
+def count_total_topics(ndjson_files: List[Path]) -> int:
+    """Count total number of topic records across NDJSON files (for progress bar)."""
     total_topics = 0
 
-    if not ndjson_file.exists():
-        return 0
-
-    print("  Counting lines in input file...")
-    total_lines = 0
-    try:
-        with open(ndjson_file, "r", encoding="utf-8") as f:
-            for line in f:
-                if line.strip():
-                    total_lines += 1
-    except Exception:
-        return 0
-
-    print("  Counting topics in input file...")
-    pbar = tqdm(
-        total=total_lines, desc="  Counting topics", unit="record", unit_scale=True
-    )
-
-    try:
-        with open(ndjson_file, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    record = json.loads(line)
-                    if record.get("dataset_id") and record.get("topic_id"):
-                        total_topics += 1
-                except (json.JSONDecodeError, KeyError, TypeError):
-                    pass
-                pbar.update(1)
-    except Exception:
-        pass
-    pbar.close()
+    for ndjson_file in ndjson_files:
+        if not ndjson_file.exists():
+            continue
+        try:
+            with open(ndjson_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    if not line.strip():
+                        continue
+                    try:
+                        record = json.loads(line)
+                        if record.get("dataset_id") and record.get("topic_id"):
+                            total_topics += 1
+                    except (json.JSONDecodeError, KeyError, TypeError):
+                        pass
+        except Exception:
+            pass
     return total_topics
 
 
@@ -135,12 +125,12 @@ def write_topic_batch(
 
 
 def process_topics(
-    ndjson_file: Path,
+    ndjson_files: List[Path],
     output_dir: Path,
     identifier_to_id: Dict[str, int],
     total_topics: int,
 ) -> None:
-    """Process NDJSON file and create topic NDJSON files."""
+    """Process NDJSON files and create topic NDJSON files."""
     file_number = 1
     current_batch: List[Dict[str, Any]] = []
     total_topics_processed = 0
@@ -148,37 +138,41 @@ def process_topics(
 
     pbar = tqdm(total=total_topics, desc="  Processing", unit="topic", unit_scale=True)
 
-    try:
-        with open(ndjson_file, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
+    for ndjson_file in ndjson_files:
+        if not ndjson_file.exists():
+            tqdm.write(f"    ⚠️  File not found: {ndjson_file}")
+            continue
+        try:
+            with open(ndjson_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
 
-                try:
-                    record = json.loads(line)
-                    topic = extract_topic_from_record(record, identifier_to_id)
+                    try:
+                        record = json.loads(line)
+                        topic = extract_topic_from_record(record, identifier_to_id)
 
-                    if topic:
-                        current_batch.append(topic)
-                        total_topics_processed += 1
-                        pbar.update(1)
+                        if topic:
+                            current_batch.append(topic)
+                            total_topics_processed += 1
+                            pbar.update(1)
 
-                        if len(current_batch) >= TOPICS_PER_FILE:
-                            write_topic_batch(current_batch, file_number, output_dir)
-                            file_number += 1
-                            current_batch = []
-                    else:
+                            if len(current_batch) >= TOPICS_PER_FILE:
+                                write_topic_batch(
+                                    current_batch, file_number, output_dir
+                                )
+                                file_number += 1
+                                current_batch = []
+                        else:
+                            total_topics_skipped += 1
+
+                    except (json.JSONDecodeError, KeyError, TypeError) as error:
                         total_topics_skipped += 1
+                        tqdm.write(f"    ⚠️  Failed to parse line: {error}")
 
-                except (json.JSONDecodeError, KeyError, TypeError) as error:
-                    total_topics_skipped += 1
-                    tqdm.write(f"    ⚠️  Failed to parse line: {error}")
-
-    except FileNotFoundError:
-        tqdm.write(f"    ⚠️  File not found: {ndjson_file}")
-    except Exception as error:
-        tqdm.write(f"    ⚠️  Error reading file: {error}")
+        except Exception as error:
+            tqdm.write(f"    ⚠️  Error reading file {ndjson_file}: {error}")
 
     pbar.close()
 
@@ -192,29 +186,30 @@ def process_topics(
 
 
 def main() -> None:
-    """Main function to process topics from topics_enhanced.ndjson."""
+    """Main function to process topics from NDJSON files in topics_split directory."""
     print("🚀 Starting topic processing...")
 
-    ndjson_file_name = "topics_enhanced.ndjson"
+    input_dir_name = "topics_split"
     output_folder_name = "topics"
 
     print("📍 Step 1: Locating directories...")
     home_dir = Path.home()
     downloads_dir = home_dir / "Downloads"
-    ndjson_file = downloads_dir / ndjson_file_name
+    input_dir = downloads_dir / input_dir_name
     output_dir = downloads_dir / "database" / output_folder_name
     mapping_dir = downloads_dir / "database" / IDENTIFIER_TO_ID_MAP_DIR
 
-    print(f"Reading NDJSON file: {ndjson_file}")
+    print(f"Input directory (NDJSON files): {input_dir}")
     print(f"Output directory: {output_dir}")
     print(f"Mapping directory: {mapping_dir}")
 
-    if not ndjson_file.exists():
+    ndjson_files = get_ndjson_files(input_dir)
+    if not ndjson_files:
         raise FileNotFoundError(
-            f"File not found: {ndjson_file}. "
-            f"Please ensure the {ndjson_file_name} file exists in your Downloads directory."
+            f"No .ndjson files found in {input_dir}. "
+            f"Please ensure the {input_dir_name} directory exists and contains .ndjson files."
         )
-    print("✓ NDJSON file found")
+    print(f"✓ Found {len(ndjson_files)} NDJSON file(s)")
 
     if output_dir.exists():
         import shutil
@@ -244,8 +239,8 @@ def main() -> None:
             f"Please run build-identifier-datasetid-map.py to rebuild the mapping."
         )
 
-    print("\n📊 Step 3: Counting total topics in input file...")
-    total_topics = count_total_topics(ndjson_file)
+    print("\n📊 Step 3: Counting total topics in input files...")
+    total_topics = count_total_topics(ndjson_files)
     print(f"  Found {total_topics:,} total topics to process")
 
     print(
@@ -253,7 +248,7 @@ def main() -> None:
         f"(~{TOPICS_PER_FILE:,} topics each)..."
     )
 
-    process_topics(ndjson_file, output_dir, identifier_to_id, total_topics)
+    process_topics(ndjson_files, output_dir, identifier_to_id, total_topics)
 
     print("\n✅ All topics have been processed successfully!")
     print(f"🎉 Processed files are available in: {output_dir}")

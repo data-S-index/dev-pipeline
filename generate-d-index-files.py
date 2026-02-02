@@ -29,7 +29,11 @@ OTHER REPO SETUP (when this file lives in a different repository):
 --------------------------------------------------------------------------------
 """
 
+# -----------------------------------------------------------------------------
+# Imports
+# -----------------------------------------------------------------------------
 import json
+from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -39,23 +43,42 @@ from tqdm import tqdm
 
 from config import DATABASE_URL
 
-# Same defaults as sindex.metrics.datasetindex (dataset_index_timeseries)
+# -----------------------------------------------------------------------------
+# Normalization defaults (must match s-index-api for identical d-index values)
+# -----------------------------------------------------------------------------
+# FT = median FAIR score for topic/year; used to normalize Fi in d-index formula
 FT_DEFAULT = 0.5
+# CTw = median citation weight for topic/year; normalizes cumulative citation weight
 CTw_DEFAULT = 1.0
+# MTw = median mention weight for topic/year; normalizes cumulative mention weight
 MTw_DEFAULT = 1.0
 
-# Batch processing configuration
-BATCH_SIZE = 100000
-DATASET_LIMIT = 1000  # Max number of datasets to process (by ID range 1..limit)
+# -----------------------------------------------------------------------------
+# Batch and parallelism
+# -----------------------------------------------------------------------------
+# How many datasets to fetch from DB per batch; also used as records-per-file threshold
+BATCH_SIZE = 10000
+# Number of worker processes for d-index computation (0 = single-threaded).
+# Set to 4 or more (e.g. os.cpu_count() - 1) to use multiple cores after enabling norm cache.
+N_WORKERS = 0
 
-# Normalization DuckDB: same schema as s-index-api (mock_norm.duckdb).
-# In the other repo: copy from s-index-api input/mock_norm/ and replace with real numbers later.
+# -----------------------------------------------------------------------------
+# Normalization DB (DuckDB) configuration
+# -----------------------------------------------------------------------------
+# Table name in mock_norm.duckdb; same schema as s-index-api
 NORM_TABLE = "topic_norm_factors_mock"
+# When topic-specific norms are missing, use norms for this topic_id
 FALLBACK_TOPIC_ID = "ALL"
+# Sentinel year when publication year is unknown; norm table may have rows for this year
 UNKNOWN_YEAR = -1
 
 # OpenAlex topic IDs: DB may store "T12345" or "https://openalex.org/T12345"; norm table may use either
 OPENALEX_TOPIC_PREFIX = "https://openalex.org/"
+
+
+# -----------------------------------------------------------------------------
+# OpenAlex topic ID helpers (normalization table may use short or full form)
+# -----------------------------------------------------------------------------
 
 
 def _openalex_topic_id_short(topic_id: Optional[str]) -> Optional[str]:
@@ -63,6 +86,7 @@ def _openalex_topic_id_short(topic_id: Optional[str]) -> Optional[str]:
     if not topic_id or not isinstance(topic_id, str):
         return None
     s = topic_id.strip()
+    # Strip the OpenAlex URL prefix to get "T12345"
     if s.startswith(OPENALEX_TOPIC_PREFIX) and len(s) > len(OPENALEX_TOPIC_PREFIX):
         return s[len(OPENALEX_TOPIC_PREFIX) :]
     return None
@@ -75,9 +99,15 @@ def _openalex_topic_id_full(topic_id: Optional[str]) -> Optional[str]:
     s = topic_id.strip()
     if s.startswith(("http://", "https://")):
         return None  # already full form
+    # Prepend prefix for short IDs like "T12180"; don't turn "ALL" into a URL
     if len(s) > 0 and s != FALLBACK_TOPIC_ID:
         return OPENALEX_TOPIC_PREFIX + s
     return None
+
+
+# -----------------------------------------------------------------------------
+# Normalization factor construction and year clamping
+# -----------------------------------------------------------------------------
 
 
 def _build_normalization_factors(
@@ -117,6 +147,7 @@ def _clamp_year_to_available_range(
     year: int,
 ) -> Tuple[int, bool]:
     """Clamp year to [min_year, max_year] in table (years >= 0). Returns (year_used, used_clamp)."""
+    # Query min/max year for this topic (and fallback ALL) so we can clamp requested year
     if topic_id:
         row = con.execute(
             f"""
@@ -153,6 +184,7 @@ def _fetch_norm_row(
     year: int,
 ):
     """Return (ft_median, ctw_median, mtw_median) or None."""
+    # Single-row lookup: one (topic_id, year) -> (FT, CTw, MTw)
     row = con.execute(
         f"""
         SELECT ft_median, ctw_median, mtw_median
@@ -163,6 +195,157 @@ def _fetch_norm_row(
         [topic_id, year],
     ).fetchone()
     return row
+
+
+def _load_norm_cache(
+    norm_db_path: Optional[Path],
+    table: str = NORM_TABLE,
+) -> Tuple[
+    Optional[Dict[Tuple[str, int], Tuple[float, float, float]]],
+    Optional[Dict[str, Tuple[int, int]]],
+]:
+    """
+    Load the entire normalization table into memory (one DuckDB connection, two queries).
+    Returns (norm_cache, year_range_by_topic). norm_cache key is (topic_id, year), value is (ft, ctw, mtw).
+    year_range_by_topic[topic_id] = (min_year, max_year) for year clamping.
+    """
+    if not norm_db_path or not norm_db_path.exists():
+        return None, None
+    try:
+        import duckdb
+    except ImportError:
+        return None, None
+    try:
+        # Read-only connection; load all rows in one go for fast lookups later
+        with duckdb.connect(str(norm_db_path), read_only=True) as con:
+            rows = con.execute(
+                f"""
+                SELECT topic_id, year, ft_median, ctw_median, mtw_median
+                FROM {table}
+                WHERE year >= 0
+                """
+            ).fetchall()
+            norm_cache: Dict[Tuple[str, int], Tuple[float, float, float]] = {}
+            year_range: Dict[str, Tuple[int, int]] = {}
+            for topic_id, year, ft, ctw, mtw in rows:
+                tid = str(topic_id).strip()
+                y = int(year)
+                norm_cache[(tid, y)] = (float(ft), float(ctw), float(mtw))
+                # Track min/max year per topic for clamping without hitting DB again
+                if tid not in year_range:
+                    year_range[tid] = (y, y)
+                else:
+                    lo, hi = year_range[tid]
+                    year_range[tid] = (min(lo, y), max(hi, y))
+            return norm_cache, year_range
+    except Exception:
+        return None, None
+
+
+def _clamp_year_using_cache(
+    year_range_by_topic: Dict[str, Tuple[int, int]],
+    topic_id: Optional[str],
+    year: int,
+) -> Tuple[int, bool]:
+    """Clamp year to available range using preloaded year ranges. Returns (year_used, used_clamp)."""
+    # Consider both requested topic and ALL for valid year range
+    keys = [FALLBACK_TOPIC_ID]
+    if topic_id and isinstance(topic_id, str) and topic_id.strip():
+        keys.append(topic_id.strip())
+    mins = [year_range_by_topic.get(k, (None, None))[0] for k in keys]
+    maxs = [year_range_by_topic.get(k, (None, None))[1] for k in keys]
+    # Use the union of ranges: smallest min and largest max across topic + ALL
+    min_y = (
+        min(m for m in mins if m is not None)
+        if any(m is not None for m in mins)
+        else None
+    )
+    max_y = (
+        max(m for m in maxs if m is not None)
+        if any(m is not None for m in maxs)
+        else None
+    )
+    if min_y is None or max_y is None:
+        return year, False
+    if year < min_y:
+        return min_y, True
+    if year > max_y:
+        return max_y, True
+    return year, False
+
+
+def _get_norm_factors_from_cache(
+    norm_cache: Dict[Tuple[str, int], Tuple[float, float, float]],
+    year_range_by_topic: Dict[str, Tuple[int, int]],
+    topic_id: Optional[str],
+    year: Optional[int],
+) -> Optional[Dict]:
+    """
+    Same fallback order as _get_norm_factors_from_duckdb but using in-memory cache (no DB calls).
+    """
+    # Resolve year: clamp to available range if we have year ranges
+    used_year_clamp = False
+    if year is None:
+        year_used = UNKNOWN_YEAR
+        year_requested = year
+    else:
+        year_requested = int(year)
+        year_used, used_year_clamp = _clamp_year_using_cache(
+            year_range_by_topic, topic_id, year_requested
+        )
+
+    def try_key(tid: str, y: int) -> Optional[Dict]:
+        row = norm_cache.get((tid, y))
+        if row:
+            ft, ctw, mtw = row
+            return _build_normalization_factors(
+                FT=ft,
+                CTw=ctw,
+                MTw=mtw,
+                topic_id_used=tid,
+                year_used=y,
+                topic_id_requested=topic_id,
+                year_requested=year,
+                used_year_clamp=used_year_clamp,
+            )
+        return None
+
+    # Fallback order: 1) topic as-is 2) full URL 3) short ID 4) ALL; then same with UNKNOWN_YEAR
+    topic_id_short = _openalex_topic_id_short(topic_id) if topic_id else None
+    topic_id_full = _openalex_topic_id_full(topic_id) if topic_id else None
+    if topic_id:
+        out = try_key(topic_id, year_used)
+        if out:
+            return out
+    if topic_id_full and topic_id_full != topic_id:
+        out = try_key(topic_id_full, year_used)
+        if out:
+            return out
+    if topic_id_short and topic_id_short != topic_id:
+        out = try_key(topic_id_short, year_used)
+        if out:
+            return out
+    out = try_key(FALLBACK_TOPIC_ID, year_used)
+    if out:
+        return out
+    # Year fallback: try UNKNOWN_YEAR for each topic variant
+    if year is not None:
+        if topic_id:
+            out = try_key(topic_id, UNKNOWN_YEAR)
+            if out:
+                return out
+        if topic_id_full and topic_id_full != topic_id:
+            out = try_key(topic_id_full, UNKNOWN_YEAR)
+            if out:
+                return out
+        if topic_id_short and topic_id_short != topic_id:
+            out = try_key(topic_id_short, UNKNOWN_YEAR)
+            if out:
+                return out
+        out = try_key(FALLBACK_TOPIC_ID, UNKNOWN_YEAR)
+        if out:
+            return out
+    return None
 
 
 def _get_norm_factors_from_duckdb(
@@ -191,6 +374,7 @@ def _get_norm_factors_from_duckdb(
         return None
     try:
         with duckdb.connect(str(norm_db_path), read_only=True) as con:
+            # Resolve year: optionally clamp to [min_year, max_year] in norm table
             used_year_clamp = False
             if year is None:
                 year_used = UNKNOWN_YEAR
@@ -219,6 +403,7 @@ def _get_norm_factors_from_duckdb(
                     )
                 return None
 
+            # Lookup order (matches s-index-api): topic+year, then ALL+year, then UNKNOWN_YEAR variants
             # 1) topic_id + year_used (as stored: "T12180" or "https://openalex.org/T12345")
             topic_id_short = _openalex_topic_id_short(topic_id) if topic_id else None
             topic_id_full = _openalex_topic_id_full(topic_id) if topic_id else None
@@ -236,11 +421,11 @@ def _get_norm_factors_from_duckdb(
                 out = try_row(topic_id_short, year_used)
                 if out:
                     return out
-            # 4) ALL + year_used
+            # 4) ALL + year_used (topic-agnostic normalization)
             out = try_row(FALLBACK_TOPIC_ID, year_used)
             if out:
                 return out
-            # 5) UNKNOWN_YEAR fallbacks only when year was provided
+            # 5) UNKNOWN_YEAR fallbacks only when year was provided (year-agnostic row)
             if year is not None:
                 if topic_id:
                     out = try_row(topic_id, UNKNOWN_YEAR)
@@ -260,6 +445,11 @@ def _get_norm_factors_from_duckdb(
     except Exception:
         pass
     return None
+
+
+# -----------------------------------------------------------------------------
+# Date parsing (matches s-index-api behavior)
+# -----------------------------------------------------------------------------
 
 
 def _to_datetime_utc(s: Optional[str]) -> Optional[datetime]:
@@ -282,6 +472,11 @@ def _dt_utc_or_today(s: Optional[str], *, today_dt: datetime) -> datetime:
     """Return parsed UTC datetime or today_dt if missing/invalid (matches sindex.core.dates)."""
     dt = _to_datetime_utc(s)
     return dt if dt is not None else today_dt
+
+
+# -----------------------------------------------------------------------------
+# D-index formula (same as s-index-api dataset_index_timeseries)
+# -----------------------------------------------------------------------------
 
 
 def _dataset_index_single(
@@ -324,6 +519,7 @@ def dataset_index_timeseries_external(
     now_utc = datetime.now(timezone.utc)
     today_dt = datetime(now_utc.year, now_utc.month, now_utc.day, tzinfo=timezone.utc)
 
+    # Collect all citation and mention events with (datetime, type, weight)
     events: List[Tuple[datetime, str, float]] = []  # (dt, type, weight)
     for c in citations:
         dt = _dt_utc_or_today(c.get(citation_date_key), today_dt=today_dt)
@@ -335,6 +531,7 @@ def dataset_index_timeseries_external(
         events.append((dt, "mention", w))
     events.sort(key=lambda t: t[0])
 
+    # Build list of time points: publication date first, then each event date (deduplicated)
     eval_dates: List[datetime] = []
     seen: set = set()
     pub_dt = _to_datetime_utc(pubdate) if pubdate else None
@@ -345,6 +542,7 @@ def dataset_index_timeseries_external(
         if dt not in seen:
             eval_dates.append(dt)
             seen.add(dt)
+    # Publication date is always first; remaining dates sorted
     if pub_dt is not None:
         rest = sorted([d for d in eval_dates if d != pub_dt])
         eval_dates = [pub_dt] + rest
@@ -353,10 +551,12 @@ def dataset_index_timeseries_external(
     if not eval_dates:
         eval_dates = [today_dt]
 
+    # For each eval date, accumulate citations/mentions up to that date and compute d-index
     out: List[dict] = []
     ciw, miw = 0.0, 0.0
     i = 0
     for dt in eval_dates:
+        # Consume all events on or before this date to get cumulative weights
         while i < len(events) and events[i][0] <= dt:
             _, typ, w = events[i]
             if typ == "citation":
@@ -375,10 +575,15 @@ def dataset_index_timeseries_external(
 
 
 def serialize_datetime(obj):
-    """Serialize datetime objects to ISO format strings."""
+    """Serialize datetime objects to ISO format strings for JSON output."""
     if isinstance(obj, datetime):
         return obj.isoformat()
     raise TypeError(f"Type {type(obj)} not serializable")
+
+
+# -----------------------------------------------------------------------------
+# NDJSON output: d-index and normalization files
+# -----------------------------------------------------------------------------
 
 
 def write_batch_to_file(batch: list, file_number: int, output_dir: Path) -> None:
@@ -402,6 +607,7 @@ def write_normalization_batch_to_file(
     d_index_batch: list, file_number: int, norm_dir: Path
 ) -> None:
     """Write one NDJSON line per unique dataset in d_index_batch to norm_dir/{file_number}.ndjson."""
+    # Each dataset may have multiple time points; we output one line per dataset with its norm factors
     seen: set = set()
     norm_lines: list = []
     for record in d_index_batch:
@@ -424,6 +630,115 @@ def write_normalization_batch_to_file(
             )
 
 
+# -----------------------------------------------------------------------------
+# Single-dataset and chunk processing (used by main and by worker processes)
+# -----------------------------------------------------------------------------
+
+
+def _process_one_dataset_to_records(
+    dataset_id: int,
+    published_at: Optional[datetime],
+    topic_id: Optional[str],
+    fair_score: float,
+    citations: List[Tuple[Optional[datetime], float]],
+    mentions: List[dict],
+    norm_cache: Optional[Dict[Tuple[str, int], Tuple[float, float, float]]],
+    year_range_by_topic: Optional[Dict[str, Tuple[int, int]]],
+    norm_db_path: Optional[Path],
+) -> List[dict]:
+    """
+    Compute d-index time series for one dataset and return list of records (for multiprocessing).
+    Normalize: empty topic_id -> None. If norm_cache/year_range_by_topic are set, use cache; else DuckDB.
+    """
+    # Normalize empty/whitespace topic_id to None
+    if topic_id is not None and (not isinstance(topic_id, str) or not topic_id.strip()):
+        topic_id = None
+    year = published_at.year if published_at else None
+    # Prefer in-memory norm cache when available (faster); otherwise query DuckDB
+    if norm_cache is not None and year_range_by_topic is not None:
+        norm = _get_norm_factors_from_cache(
+            norm_cache, year_range_by_topic, topic_id, year
+        )
+    else:
+        norm = (
+            _get_norm_factors_from_duckdb(norm_db_path, topic_id, year)
+            if norm_db_path
+            else None
+        )
+    if norm is not None:
+        FT, CTw, MTw = norm["FT"], norm["CTw"], norm["MTw"]
+        normalization_factors = norm
+    else:
+        # Use defaults when no norm row found (e.g. missing DuckDB or no matching topic/year)
+        FT, CTw, MTw = FT_DEFAULT, CTw_DEFAULT, MTw_DEFAULT
+        normalization_factors = _build_normalization_factors(
+            FT=FT,
+            CTw=CTw,
+            MTw=MTw,
+            topic_id_used=FALLBACK_TOPIC_ID,
+            year_used=year,
+            topic_id_requested=topic_id,
+            year_requested=year,
+            used_year_clamp=False,
+        )
+    d_index_results = process_dataset(
+        dataset_id,
+        published_at,
+        fair_score,
+        citations,
+        mentions,
+        FT=FT,
+        CTw=CTw,
+        MTw=MTw,
+    )
+    records = []
+    for time_point, d_index in d_index_results:
+        records.append(
+            {
+                "datasetId": dataset_id,
+                "score": d_index,
+                "created": (time_point.isoformat() if time_point else None),
+                "normalization_factors": normalization_factors,
+            }
+        )
+    return records
+
+
+def _process_chunk_of_datasets(args: Tuple) -> List[dict]:
+    """Worker: process a chunk of datasets and return list of records (for ProcessPoolExecutor)."""
+    # Unpack payload (must be picklable: norm_db_path as str, worker converts to Path)
+    (
+        chunk,
+        norm_cache,
+        year_range_by_topic,
+        norm_db_path,
+    ) = args
+    norm_db_path = Path(norm_db_path) if norm_db_path else None
+    out: List[dict] = []
+    for (
+        dataset_id,
+        published_at,
+        topic_id,
+        fair_score,
+        citations,
+        mentions,
+    ) in chunk:
+        out.extend(
+            _process_one_dataset_to_records(
+                dataset_id=dataset_id,
+                published_at=published_at,
+                topic_id=topic_id,
+                fair_score=fair_score,
+                citations=citations,
+                mentions=mentions,
+                norm_cache=norm_cache,
+                year_range_by_topic=year_range_by_topic,
+                norm_db_path=norm_db_path,
+            )
+        )
+    return out
+
+
 def process_dataset(
     dataset_id: int,
     published_at: Optional[datetime],
@@ -438,10 +753,11 @@ def process_dataset(
     Calculate d-index at all time points using same logic as dataset_index_timeseries.
     FAIR score is normalized to [0,1] as Fi = fair_score_raw / 100.
     """
-    # Fi in [0, 1] as in s-index-api jobs
+    # Fi in [0, 1] as in s-index-api jobs (FAIR score 0–100 -> 0–1)
     Fi = (float(fair_score_raw) / 100.0) if fair_score_raw is not None else 0.0
     Fi = max(0.0, min(1.0, Fi))
 
+    # Convert to format expected by dataset_index_timeseries_external (ISO strings + dicts)
     pubdate_iso = published_at.isoformat() if published_at else None
     citations_list = [
         {
@@ -472,7 +788,9 @@ def main() -> None:
     """Main function to calculate and export d-index for all datasets to NDJSON files."""
     print("🚀 Starting d-index calculation process...")
 
-    # Get OS-agnostic paths (matching generate-fuji-files.py pattern)
+    # -------------------------------------------------------------------------
+    # Paths: output and normalization directories; DuckDB path for norm factors
+    # -------------------------------------------------------------------------
     print("📍 Locating directories...")
     home_dir = Path.home()
     downloads_dir = home_dir / "Downloads"
@@ -488,10 +806,23 @@ def main() -> None:
         norm_db_path = None
         print("  Normalization DB: not found (using default FT, CTw, MTw)")
 
+    # Preload normalization table into memory so we avoid per-dataset DuckDB lookups
+    norm_cache: Optional[Dict[Tuple[str, int], Tuple[float, float, float]]] = None
+    year_range_by_topic: Optional[Dict[str, Tuple[int, int]]] = None
+    if norm_db_path:
+        print("  Loading normalization table into memory...")
+        norm_cache, year_range_by_topic = _load_norm_cache(norm_db_path)
+        if norm_cache is not None:
+            print(f"  Loaded {len(norm_cache):,} norm rows")
+        else:
+            print("  Norm cache failed (will use per-dataset DuckDB lookups)")
+
     print(f"Output directory: {output_dir}")
     print(f"Normalization directory: {norm_dir}")
 
-    # Clean output directory
+    # -------------------------------------------------------------------------
+    # Prepare output directories (clean and create)
+    # -------------------------------------------------------------------------
     import shutil
 
     if output_dir.exists():
@@ -511,7 +842,9 @@ def main() -> None:
     norm_dir.mkdir(parents=True, exist_ok=True)
     print("✓ Normalization directory ready")
 
-    # Connect to database
+    # -------------------------------------------------------------------------
+    # Database connection and batch loop
+    # -------------------------------------------------------------------------
     print("\n🔌 Connecting to database...")
     try:
         with psycopg.connect(DATABASE_URL) as conn:
@@ -523,21 +856,28 @@ def main() -> None:
                 cur.execute('SELECT MAX(id) FROM "Dataset"')
                 max_dataset_id = cur.fetchone()[0] or 0
 
-            max_dataset_id = min(max_dataset_id, DATASET_LIMIT)
             total_datasets = max_dataset_id
             print(
-                f"  Processing {total_datasets:,} datasets (limit: {DATASET_LIMIT:,}, max ID: {max_dataset_id})"
+                f"  Processing {total_datasets:,} datasets (max ID: {max_dataset_id})"
             )
 
             # Process datasets in batches
             print(
                 f"\n📈 Calculating d-index values (processing {BATCH_SIZE:,} datasets per batch)..."
             )
+            if N_WORKERS > 0:
+                print(
+                    f"  Using {N_WORKERS} worker process(es) for parallel computation."
+                )
             total_records = 0
             processed_datasets = 0
             file_number = 1
-            current_batch = []
-            current_id = 1  # Start from ID 1
+            current_batch = (
+                []
+            )  # Accumulates records until we hit BATCH_SIZE, then write to file
+            current_id = (
+                1  # Dataset ID range: process [current_id, batch_end] per DB batch
+            )
 
             with conn.cursor() as cur:
                 # Create progress bar for datasets
@@ -548,9 +888,8 @@ def main() -> None:
                     unit_scale=True,
                 )
 
-                # Process in batches
+                # Process in batches by dataset ID range
                 while current_id <= max_dataset_id:
-                    # Calculate batch range
                     batch_end = min(current_id + BATCH_SIZE - 1, max_dataset_id)
 
                     # Fetch publishedAt and topicId (DatasetTopic) for datasets in this batch
@@ -636,86 +975,133 @@ def main() -> None:
                                 }
                             )
 
-                    # Process each dataset in the batch (row: id, publishedAt, topicId)
-                    for dataset_id, published_at, topic_id in datasets_batch:
-                        # Normalize: empty string or whitespace -> None so we use ALL lookup
-                        if topic_id is not None and (
-                            not isinstance(topic_id, str) or not topic_id.strip()
-                        ):
-                            topic_id = None
-                        fair_score = fair_scores.get(dataset_id, 0.0)
-                        citations = citations_by_dataset.get(dataset_id, [])
-                        mentions = mentions_by_dataset.get(dataset_id, [])
-                        year = published_at.year if published_at else None
-                        norm = (
-                            _get_norm_factors_from_duckdb(norm_db_path, topic_id, year)
-                            if norm_db_path
-                            else None
-                        )
-                        if norm is not None:
-                            FT = norm["FT"]
-                            CTw = norm["CTw"]
-                            MTw = norm["MTw"]
-                            normalization_factors = norm
-                        else:
-                            FT = FT_DEFAULT
-                            CTw = CTw_DEFAULT
-                            MTw = MTw_DEFAULT
-                            normalization_factors = _build_normalization_factors(
+                    # Build list of records for this batch (parallel or sequential)
+                    batch_records: List[dict] = []
+                    if N_WORKERS > 0:
+                        # Build payload: list of (dataset_id, published_at, topic_id, fair_score, citations, mentions)
+                        rows = []
+                        for dataset_id, published_at, topic_id in datasets_batch:
+                            fair_score = fair_scores.get(dataset_id, 0.0)
+                            citations = citations_by_dataset.get(dataset_id, [])
+                            mentions = mentions_by_dataset.get(dataset_id, [])
+                            rows.append(
+                                (
+                                    dataset_id,
+                                    published_at,
+                                    topic_id,
+                                    fair_score,
+                                    citations,
+                                    mentions,
+                                )
+                            )
+                        chunk_size = max(1, len(rows) // N_WORKERS)
+                        chunk_payloads = []
+                        for i in range(0, len(rows), chunk_size):
+                            chunk = rows[i : i + chunk_size]
+                            chunk_payloads.append(
+                                (
+                                    chunk,
+                                    norm_cache,
+                                    year_range_by_topic,
+                                    str(norm_db_path) if norm_db_path else None,
+                                )
+                            )
+                        # norm_db_path must be passed as str for pickling; worker will use Path
+                        with ProcessPoolExecutor(max_workers=N_WORKERS) as executor:
+                            for rec_list in executor.map(
+                                _process_chunk_of_datasets, chunk_payloads
+                            ):
+                                batch_records.extend(rec_list)
+                    else:
+                        # Sequential path
+                        for dataset_id, published_at, topic_id in datasets_batch:
+                            if topic_id is not None and (
+                                not isinstance(topic_id, str) or not topic_id.strip()
+                            ):
+                                topic_id = None
+                            fair_score = fair_scores.get(dataset_id, 0.0)
+                            citations = citations_by_dataset.get(dataset_id, [])
+                            mentions = mentions_by_dataset.get(dataset_id, [])
+                            year = published_at.year if published_at else None
+                            if norm_cache is not None and year_range_by_topic:
+                                norm = _get_norm_factors_from_cache(
+                                    norm_cache,
+                                    year_range_by_topic,
+                                    topic_id,
+                                    year,
+                                )
+                            else:
+                                norm = (
+                                    _get_norm_factors_from_duckdb(
+                                        norm_db_path, topic_id, year
+                                    )
+                                    if norm_db_path
+                                    else None
+                                )
+                            if norm is not None:
+                                FT = norm["FT"]
+                                CTw = norm["CTw"]
+                                MTw = norm["MTw"]
+                                normalization_factors = norm
+                            else:
+                                FT = FT_DEFAULT
+                                CTw = CTw_DEFAULT
+                                MTw = MTw_DEFAULT
+                                normalization_factors = _build_normalization_factors(
+                                    FT=FT,
+                                    CTw=CTw,
+                                    MTw=MTw,
+                                    topic_id_used=FALLBACK_TOPIC_ID,
+                                    year_used=year,
+                                    topic_id_requested=topic_id,
+                                    year_requested=year,
+                                    used_year_clamp=False,
+                                )
+                            d_index_results = process_dataset(
+                                dataset_id,
+                                published_at,
+                                fair_score,
+                                citations,
+                                mentions,
                                 FT=FT,
                                 CTw=CTw,
                                 MTw=MTw,
-                                topic_id_used=FALLBACK_TOPIC_ID,
-                                year_used=year,
-                                topic_id_requested=topic_id,
-                                year_requested=year,
-                                used_year_clamp=False,
                             )
-
-                        d_index_results = process_dataset(
-                            dataset_id,
-                            published_at,
-                            fair_score,
-                            citations,
-                            mentions,
-                            FT=FT,
-                            CTw=CTw,
-                            MTw=MTw,
-                        )
-
-                        # Create records for each d-index value
-                        for time_point, d_index in d_index_results:
-                            record = {
-                                "datasetId": dataset_id,
-                                "score": d_index,
-                                "created": (
-                                    time_point.isoformat() if time_point else None
-                                ),
-                                "normalization_factors": normalization_factors,
-                            }
-                            current_batch.append(record)
-                            total_records += 1
-
-                            # Write batch when it reaches BATCH_SIZE
-                            if len(current_batch) >= BATCH_SIZE:
-                                write_batch_to_file(
-                                    current_batch, file_number, output_dir
+                            for time_point, d_index in d_index_results:
+                                batch_records.append(
+                                    {
+                                        "datasetId": dataset_id,
+                                        "score": d_index,
+                                        "created": (
+                                            time_point.isoformat()
+                                            if time_point
+                                            else None
+                                        ),
+                                        "normalization_factors": normalization_factors,
+                                    }
                                 )
-                                write_normalization_batch_to_file(
-                                    current_batch, file_number, norm_dir
-                                )
-                                file_number += 1
-                                current_batch = []
 
-                        processed_datasets += 1
-                        pbar.update(1)
+                    # Drain batch_records into current_batch; flush to NDJSON when full
+                    for record in batch_records:
+                        current_batch.append(record)
+                        total_records += 1
+                        if len(current_batch) >= BATCH_SIZE:
+                            write_batch_to_file(current_batch, file_number, output_dir)
+                            write_normalization_batch_to_file(
+                                current_batch, file_number, norm_dir
+                            )
+                            file_number += 1
+                            current_batch = []
 
-                    # Move to next batch
+                    processed_datasets += len(datasets_batch)
+                    pbar.update(len(datasets_batch))
+
+                    # Advance to next ID range for next DB batch
                     current_id = batch_end + 1
 
                 pbar.close()
 
-                # Write remaining records as final file
+                # Flush any remaining records (last partial batch) to final NDJSON file
                 if current_batch:
                     write_batch_to_file(current_batch, file_number, output_dir)
                     write_normalization_batch_to_file(
@@ -737,6 +1123,10 @@ def main() -> None:
         print(f"\n❌ Error occurred: {e}")
         raise
 
+
+# -----------------------------------------------------------------------------
+# Entry point
+# -----------------------------------------------------------------------------
 
 if __name__ == "__main__":
     try:
