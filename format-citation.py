@@ -201,6 +201,8 @@ def process_citations(
     current_batch: List[Dict[str, Any]] = []
     total_citations_processed = 0
     total_citations_skipped = 0
+    # Track (datasetId, citationLink) to avoid adding duplicate citations
+    seen_citation_links: set[tuple[int, str]] = set()
 
     # Create progress bar for overall processing
     pbar = tqdm(
@@ -220,6 +222,11 @@ def process_citations(
                     citation = extract_citation_from_record(record, identifier_to_id)
 
                     if citation:
+                        key = (citation["datasetId"], citation["citationLink"])
+                        if key in seen_citation_links:
+                            total_citations_skipped += 1
+                            continue
+                        seen_citation_links.add(key)
                         current_batch.append(citation)
                         total_citations_processed += 1
                         pbar.update(1)

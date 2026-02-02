@@ -181,7 +181,7 @@ def main() -> None:
     if not citation_dir.exists():
         raise FileNotFoundError(
             f"Citation directory not found: {citation_dir}. "
-            f"Please run format-mdc-citation.py first."
+            f"Please run format-citation.py first."
         )
 
     # Connect to database

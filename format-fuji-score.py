@@ -4,6 +4,7 @@ import contextlib
 import json
 import re
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -77,16 +78,24 @@ def extract_fuji_from_record(
     evaluation_date = _normalize_evaluation_date(
         record.get("evaluationDate") or record.get("evaluation_date")
     )
+    if evaluation_date is None:
+        evaluation_date = datetime.now(timezone.utc).isoformat()
+
     metric_version = (
         record.get("metricVersion") or record.get("metric_version")
     ) or None
     if metric_version is not None and isinstance(metric_version, str):
         metric_version = metric_version.strip() or None
+    if metric_version is None:
+        metric_version = "estimated"
+
     software_version = (
         record.get("softwareVersion") or record.get("software_version")
     ) or None
     if software_version is not None and isinstance(software_version, str):
         software_version = software_version.strip() or None
+    if software_version is None:
+        software_version = "estimated"
 
     return {
         "datasetId": dataset_id_int,
