@@ -35,20 +35,17 @@ def _normalize_affiliations(affiliations: List[str]) -> tuple:
     return tuple(sorted(cleaned))
 
 
-def author_canonical_key(author: Dict[str, Any]) -> str:
-    """Canonical key for deduplication. Split by: (1) name, (2) identifiers, (3) affiliation.
-    Same name → one group; within that, different identifiers → different authors; remainder split by affiliation.
-    Name is lowercased so case variants (e.g. Müller vs müller) dedupe together.
+def author_canonical_key(author: Dict[str, Any]) -> tuple:
+    """Canonical key for deduplication.
+    1. If author has identifiers: group only by normalized identifier set (same identifier = same person).
+    2. Else (no identifiers): group by name, then split by affiliation (same name + same affiliation = same person).
     """
+    if identifiers := _normalize_identifiers(author.get("nameIdentifiers", []) or []):
+        return ("by_identifier", identifiers)
     name_type = author.get("nameType", "")
     name = (author.get("name") or "").lower()
-    identifiers = _normalize_identifiers(author.get("nameIdentifiers", []) or [])
     affiliations = _normalize_affiliations(author.get("affiliations", []) or [])
-    return json.dumps(
-        [name_type, name, list(identifiers), list(affiliations)],
-        sort_keys=False,
-        ensure_ascii=False,
-    )
+    return ("by_name_affiliation", name_type, name, affiliations)
 
 
 def collect_unique_authors_with_datasets(
@@ -60,7 +57,7 @@ def collect_unique_authors_with_datasets(
         return []
 
     # canonical_key -> (author dict, set of dataset ids)
-    author_map: Dict[str, tuple] = {}
+    author_map: Dict[tuple, tuple] = {}
 
     for file_path in tqdm(ndjson_files, desc="Scanning dataset files", unit="file"):
         with open(file_path, "r", encoding="utf-8") as f:
