@@ -197,12 +197,11 @@ def process_citations(
     total_citations: int,
 ) -> None:
     """Process NDJSON file and create citation NDJSON files."""
-    file_number = 1
-    current_batch: List[Dict[str, Any]] = []
+    # One citation per (datasetId, citationLink); duplicates update the original's source
+    citations_by_key: Dict[tuple[int, str], Dict[str, Any]] = {}
+    ordered_keys: List[tuple[int, str]] = []
     total_citations_processed = 0
     total_citations_skipped = 0
-    # Track (datasetId, citationLink) to avoid adding duplicate citations
-    seen_citation_links: set[tuple[int, str]] = set()
 
     # Create progress bar for overall processing
     pbar = tqdm(
@@ -223,19 +222,18 @@ def process_citations(
 
                     if citation:
                         key = (citation["datasetId"], citation["citationLink"])
-                        if key in seen_citation_links:
+                        if key in citations_by_key:
+                            # Duplicate: skip but update the original's source
+                            orig = citations_by_key[key]
+                            orig["datacite"] = orig["datacite"] or citation["datacite"]
+                            orig["mdc"] = orig["mdc"] or citation["mdc"]
+                            orig["openAlex"] = orig["openAlex"] or citation["openAlex"]
                             total_citations_skipped += 1
                             continue
-                        seen_citation_links.add(key)
-                        current_batch.append(citation)
+                        citations_by_key[key] = citation
+                        ordered_keys.append(key)
                         total_citations_processed += 1
                         pbar.update(1)
-
-                        # When batch reaches CITATIONS_PER_FILE, write to file
-                        if len(current_batch) >= CITATIONS_PER_FILE:
-                            write_citation_batch(current_batch, file_number, output_dir)
-                            file_number += 1
-                            current_batch = []
                     else:
                         total_citations_skipped += 1
 
@@ -250,14 +248,22 @@ def process_citations(
 
     pbar.close()
 
-    # Write any remaining citations as the final file
-    if current_batch:
-        write_citation_batch(current_batch, file_number, output_dir)
+    # Write in batches (originals already have merged source from in-place updates)
+    file_number = 1
+    for i in range(0, len(ordered_keys), CITATIONS_PER_FILE):
+        batch_keys = ordered_keys[i : i + CITATIONS_PER_FILE]
+        write_citation_batch(
+            [citations_by_key[k] for k in batch_keys],
+            file_number,
+            output_dir,
+        )
+        file_number += 1
 
     print(f"\n  📊 Total citations processed: {total_citations_processed:,}")
     if total_citations_skipped > 0:
         print(f"  ⚠️  Total citations skipped: {total_citations_skipped:,}")
-    print(f"  📁 Total output files created: {file_number}")
+    num_files = file_number - 1
+    print(f"  📁 Total output files created: {num_files}")
 
 
 def main() -> None:
