@@ -1,4 +1,7 @@
-"""Export records with Fuji scores to NDJSON files."""
+"""Export records with Fuji scores to NDJSON files.
+
+Data model: prisma/schema.prisma (Dataset, FujiScore).
+"""
 
 import json
 from datetime import datetime
@@ -15,7 +18,9 @@ from identifier_mapping import (
 )
 
 RECORDS_PER_FILE = 10000  # Records per output file
-DB_FETCH_BATCH_SIZE = 100000  # Records to fetch from database at once (increased for slow connections)
+DB_FETCH_BATCH_SIZE = (
+    100000  # Records to fetch from database at once (increased for slow connections)
+)
 
 
 def serialize_datetime(obj):
@@ -53,7 +58,6 @@ def export_scored_records(
             SELECT COUNT(*)
             FROM "FujiScore" fs
             INNER JOIN "Dataset" d ON fs."datasetId" = d.id
-            WHERE d."identifierType" = 'doi'
             """
         )
         total_records = count_cur.fetchone()[0]
@@ -94,7 +98,6 @@ def export_scored_records(
                 fs."softwareVersion"
             FROM "FujiScore" fs
             INNER JOIN "Dataset" d ON fs."datasetId" = d.id
-            WHERE d."identifierType" = 'doi'
             ORDER BY d.id
             """
         )
@@ -109,7 +112,7 @@ def export_scored_records(
             for row in rows:
                 (
                     dataset_id_db,
-                    doi,
+                    identifier,
                     score,
                     evaluation_date,
                     metric_version,
@@ -117,7 +120,7 @@ def export_scored_records(
                 ) = row
 
                 # Try to get dataset_id from mapping file using identifier
-                identifier_lower = doi.lower() if doi else None
+                identifier_lower = identifier.lower() if identifier else None
                 dataset_id = (
                     identifier_to_id.get(identifier_lower) if identifier_lower else None
                 )
@@ -125,7 +128,7 @@ def export_scored_records(
                 # Create record with all FujiScore fields
                 record = {
                     "id": dataset_id or dataset_id_db,
-                    "doi": doi,
+                    "identifier": identifier,
                     "score": float(score) if score is not None else None,
                     "evaluationDate": (
                         evaluation_date.isoformat() if evaluation_date else None

@@ -1,4 +1,7 @@
-"""Export records with Fuji scores to NDJSON files."""
+"""Export records with Fuji scores to NDJSON files.
+
+Data model: prisma/schema.prisma (Dataset, FujiScore).
+"""
 
 import json
 from datetime import datetime
@@ -47,7 +50,6 @@ def export_scored_records(
             SELECT COUNT(*)
             FROM "FujiScore" fs
             INNER JOIN "Dataset" d ON fs."datasetId" = d.id
-            WHERE d."identifierType" = 'doi'
             """
         )
         total_records = cur.fetchone()[0]
@@ -81,7 +83,6 @@ def export_scored_records(
                 fs."softwareVersion"
             FROM "FujiScore" fs
             INNER JOIN "Dataset" d ON fs."datasetId" = d.id
-            WHERE d."identifierType" = 'doi'
             ORDER BY d.id
             """
         )
@@ -95,7 +96,7 @@ def export_scored_records(
             for row in rows:
                 (
                     dataset_id,
-                    doi,
+                    identifier,
                     score,
                     evaluation_date,
                     metric_version,
@@ -105,7 +106,7 @@ def export_scored_records(
                 # Create record with all FujiScore fields
                 record = {
                     "id": dataset_id,
-                    "doi": doi,
+                    "identifier": identifier,
                     "score": float(score) if score is not None else None,
                     "evaluationDate": (
                         evaluation_date.isoformat() if evaluation_date else None
