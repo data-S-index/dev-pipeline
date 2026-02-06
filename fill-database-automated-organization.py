@@ -12,7 +12,7 @@ from tqdm import tqdm
 from config import DATABASE_URL
 
 
-BATCH_SIZE = 10000
+BATCH_SIZE = 1000
 
 
 def natural_sort_key(path: Path) -> tuple:
@@ -43,12 +43,23 @@ def insert_automated_organizations_batch(
                 for row in org_rows:
                     copy.write_row(row)
         if link_rows:
-            with cur.copy(
-                """COPY "AutomatedOrganizationDataset" ("automatedOrganizationId", "datasetId", created, updated)
-                   FROM STDIN"""
-            ) as copy:
-                for row in link_rows:
-                    copy.write_row(row)
+            total_links = len(link_rows)
+            with tqdm(
+                total=total_links,
+                desc="  Copying link rows",
+                unit="link",
+                unit_scale=True,
+                leave=False,
+            ) as link_pbar:
+                with cur.copy(
+                    """COPY "AutomatedOrganizationDataset" ("automatedOrganizationId", "datasetId", created, updated)
+                       FROM STDIN"""
+                ) as copy:
+                    for start in range(0, total_links, BATCH_SIZE):
+                        batch = link_rows[start : start + BATCH_SIZE]
+                        for row in batch:
+                            copy.write_row(row)
+                        link_pbar.update(len(batch))
         conn.commit()
 
 
