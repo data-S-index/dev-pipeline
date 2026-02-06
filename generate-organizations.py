@@ -54,6 +54,9 @@ def collect_unique_organizations_with_datasets(
                         if not isinstance(aff, str):
                             continue
                         name = aff.strip()
+                        # if name is between parentheses, remove the parentheses
+                        name = re.sub(r"\(.*\)", "", name)
+                        name = name.strip()
                         if not name:
                             continue
                         key = name.lower()
