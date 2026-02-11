@@ -1,7 +1,7 @@
 """Fill database with d-index and normalization data from NDJSON files using psycopg3 for fast bulk inserts.
 
 Expects NDJSON produced by generate-d-index-files.py:
-  - dindex dir: lines with datasetId, score, created (DIndex table).
+  - dindex dir: lines with datasetId, score, year, created (DIndex table).
   - normalization dir: lines with datasetId, normalization_factors (NormalizationFactor table).
 """
 
@@ -45,7 +45,7 @@ def insert_dindex_batch(
     with conn.cursor() as cur:
         if dindex_rows:
             with cur.copy(
-                """COPY "DIndex" ("datasetId", score, created)
+                """COPY "DIndex" ("datasetId", score, year, created)
                    FROM STDIN"""
             ) as copy:
                 for row in dindex_rows:
@@ -146,24 +146,20 @@ def process_dindex_files(conn: psycopg.Connection, dindex_dir: Path) -> int:
                             pbar.update(1)
                             continue
 
-                        # Parse created date (default to now if not provided or parsing fails)
-                        created_date = datetime.now()
-                        created_str = record.get("created")
-                        if created_str:
-                            try:
-                                if isinstance(created_str, str):
-                                    if created_str.endswith("Z"):
-                                        created_str = created_str[:-1] + "+00:00"
-                                    created_date = datetime.fromisoformat(created_str)
-                            except (ValueError, AttributeError, TypeError):
-                                pass
+                        # Year: from record or current year (required by DIndex schema)
+                        year_val = record.get("year")
+                        year_val = (
+                            int(year_val)
+                            if year_val is not None
+                            else datetime.now().year
+                        )
 
-                        # Prepare row tuple matching database schema order
-                        # datasetId, score, created
+                        # Prepare row tuple: created is always now at insert time
                         row = (
                             dataset_id,
                             float(score),
-                            created_date,
+                            year_val,
+                            datetime.now(),
                         )
                         dindex_rows.append(row)
                         total_dindices += 1
