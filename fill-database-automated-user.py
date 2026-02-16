@@ -2,7 +2,6 @@
 
 import json
 import re
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 from typing import List
@@ -14,8 +13,6 @@ from config import DATABASE_URL
 
 
 BATCH_SIZE = 10000
-LINK_ROWS_PARALLEL_THRESHOLD = 50_000
-MAX_COPY_WORKERS = 8
 
 
 def natural_sort_key(path: Path) -> tuple:
@@ -31,100 +28,91 @@ def load_ndjson_files(directory: Path) -> List[Path]:
     return sorted(files, key=natural_sort_key)
 
 
-def _copy_link_rows_chunk(link_chunk: List[tuple]) -> None:
-    """Copy a chunk of AutomatedUserDataset rows on a dedicated connection (for parallel writes)."""
-    with psycopg.connect(DATABASE_URL, autocommit=False) as conn:
-        with conn.cursor() as cur:
-            with cur.copy(
-                """COPY "AutomatedUserDataset" ("automatedUserId", "datasetId", created, updated)
-                   FROM STDIN"""
-            ) as copy:
-                for row in link_chunk:
-                    copy.write_row(row)
-        conn.commit()
-
-
 def insert_automated_users_batch(
-    conn: psycopg.Connection,
-    user_rows: List[tuple],
-    link_rows: List[tuple],
+    conn: psycopg.Connection, user_rows: List[tuple]
 ) -> None:
-    """Insert a batch of AutomatedUser and AutomatedUserDataset rows using COPY."""
+    """Insert a batch of AutomatedUser rows using COPY."""
+    if not user_rows:
+        return
     with conn.cursor() as cur:
-        if user_rows:
-            with cur.copy(
-                """COPY "AutomatedUser" (id, "nameType", name, "nameIdentifiers", affiliations)
-                   FROM STDIN"""
-            ) as copy:
-                for row in user_rows:
-                    copy.write_row(row)
-        if link_rows:
-            n = len(link_rows)
-            if n >= LINK_ROWS_PARALLEL_THRESHOLD:
-                workers = min(MAX_COPY_WORKERS, max(1, n // 10_000))
-                chunk_size = (n + workers - 1) // workers
-                chunks = [
-                    link_rows[i : i + chunk_size] for i in range(0, n, chunk_size)
-                ]
-                with ThreadPoolExecutor(max_workers=workers) as executor:
-                    futures = [
-                        executor.submit(_copy_link_rows_chunk, c) for c in chunks
-                    ]
-                    for _ in tqdm(
-                        as_completed(futures),
-                        total=len(futures),
-                        desc="  COPY link rows (parallel)",
-                        unit="chunk",
-                    ):
-                        pass
-            else:
-                with cur.copy(
-                    """COPY "AutomatedUserDataset" ("automatedUserId", "datasetId", created, updated)
-                       FROM STDIN"""
-                ) as copy:
-                    for row in tqdm(
-                        link_rows,
-                        desc="  COPY link rows",
-                        unit="row",
-                        leave=False,
-                    ):
-                        copy.write_row(row)
-        conn.commit()
+        with cur.copy(
+            """COPY "AutomatedUser" (id, "nameType", name, "nameIdentifiers", affiliations)
+               FROM STDIN"""
+        ) as copy:
+            for row in user_rows:
+                copy.write_row(row)
+    conn.commit()
 
 
-def process_author_files(
-    conn: psycopg.Connection, authors_dir: Path
-) -> tuple[int, int]:
-    """Process author NDJSON files and insert AutomatedUser and AutomatedUserDataset."""
-    print("📦 Processing automated user (author) files...")
+def insert_automated_user_datasets_batch(
+    conn: psycopg.Connection, link_rows: List[tuple]
+) -> None:
+    """Insert a batch of AutomatedUserDataset rows using COPY."""
+    if not link_rows:
+        return
+    with conn.cursor() as cur:
+        with cur.copy(
+            """COPY "AutomatedUserDataset" ("automatedUserId", "datasetId", created, updated)
+               FROM STDIN"""
+        ) as copy:
+            for row in link_rows:
+                copy.write_row(row)
+    conn.commit()
 
-    ndjson_files = load_ndjson_files(authors_dir)
-    if not ndjson_files:
-        print("  ⚠️  No ndjson files found")
-        return 0, 0
 
-    print(f"  Found {len(ndjson_files)} ndjson file(s)")
-
-    total_records = 0
+def _count_records(ndjson_files: List[Path]) -> int:
+    """Count total non-empty lines across ndjson files."""
+    total = 0
     for file_path in tqdm(ndjson_files, desc="  Counting", unit="file", leave=False):
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 for line in f:
                     if line.strip():
-                        total_records += 1
+                        total += 1
         except Exception:
             continue
+    return total
 
+
+def _count_link_rows(ndjson_files: List[Path]) -> int:
+    """Count total AutomatedUserDataset rows (sum of datasetIds lengths across all author records)."""
+    total = 0
+    for file_path in tqdm(ndjson_files, desc="  Counting", unit="file", leave=False):
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        record = json.loads(line)
+                        if record.get("id"):
+                            dataset_ids = record.get("datasetIds") or []
+                            if isinstance(dataset_ids, list):
+                                total += len(dataset_ids)
+                    except json.JSONDecodeError:
+                        continue
+        except Exception:
+            continue
+    return total
+
+
+def step1_insert_automated_users(conn: psycopg.Connection, authors_dir: Path) -> int:
+    """Step 1: Read author NDJSON and batch-insert all AutomatedUser rows."""
+    print("📦 Step 1: Inserting AutomatedUser...")
+
+    ndjson_files = load_ndjson_files(authors_dir)
+    if not ndjson_files:
+        print("  ⚠️  No ndjson files found")
+        return 0
+
+    total_records = _count_records(ndjson_files)
     print(f"  Processing {total_records:,} author records...")
 
     user_rows: List[tuple] = []
-    link_rows: List[tuple] = []
     total_users = 0
-    total_links = 0
-    now = datetime.now()
-
     pbar = tqdm(
-        total=total_records, desc="  Processing", unit="record", unit_scale=True
+        total=total_records, desc="  AutomatedUser", unit="record", unit_scale=True
     )
 
     for file_path in ndjson_files:
@@ -137,7 +125,6 @@ def process_author_files(
 
                     try:
                         record = json.loads(line)
-
                         user_id = record.get("id")
                         if not user_id:
                             tqdm.write(
@@ -165,6 +152,69 @@ def process_author_files(
                             )
                         )
                         total_users += 1
+                        pbar.update(1)
+
+                        if len(user_rows) >= BATCH_SIZE:
+                            insert_automated_users_batch(conn, user_rows)
+                            user_rows = []
+
+                    except json.JSONDecodeError as e:
+                        tqdm.write(
+                            f"    ⚠️  Error parsing line in {file_path.name}: {e}"
+                        )
+                        pbar.update(1)
+                    except Exception as e:
+                        tqdm.write(
+                            f"    ⚠️  Error processing record in {file_path.name}: {e}"
+                        )
+                        pbar.update(1)
+
+        except Exception as e:
+            tqdm.write(f"    ⚠️  Error reading {file_path.name}: {e}")
+
+    pbar.close()
+    if user_rows:
+        insert_automated_users_batch(conn, user_rows)
+
+    print(f"  ✅ Inserted {total_users:,} AutomatedUser rows")
+    return total_users
+
+
+def step2_insert_automated_user_datasets(
+    conn: psycopg.Connection, authors_dir: Path
+) -> int:
+    """Step 2: Read author NDJSON and batch-insert all AutomatedUserDataset rows."""
+    print("\n📦 Step 2: Inserting AutomatedUserDataset...")
+
+    ndjson_files = load_ndjson_files(authors_dir)
+    if not ndjson_files:
+        return 0
+
+    total_links_to_insert = _count_link_rows(ndjson_files)
+    print(f"  Processing {total_links_to_insert:,} user-dataset link rows...")
+    link_rows: List[tuple] = []
+    total_links = 0
+    now = datetime.now()
+    pbar = tqdm(
+        total=total_links_to_insert,
+        desc="  AutomatedUserDataset",
+        unit="link",
+        unit_scale=True,
+    )
+
+    for file_path in ndjson_files:
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    try:
+                        record = json.loads(line)
+                        user_id = record.get("id")
+                        if not user_id:
+                            continue
 
                         dataset_ids = record.get("datasetIds") or []
                         if not isinstance(dataset_ids, list):
@@ -172,37 +222,26 @@ def process_author_files(
                         for dataset_id in dataset_ids:
                             link_rows.append((user_id, dataset_id, now, now))
                             total_links += 1
+                        pbar.update(len(dataset_ids))
 
-                        pbar.update(1)
-
-                        if len(user_rows) >= BATCH_SIZE:
-                            insert_automated_users_batch(conn, user_rows, link_rows)
-                            user_rows = []
+                        if len(link_rows) >= BATCH_SIZE:
+                            insert_automated_user_datasets_batch(conn, link_rows)
                             link_rows = []
 
-                    except json.JSONDecodeError as e:
-                        tqdm.write(
-                            f"    ⚠️  Error parsing line in {file_path.name}: {e}"
-                        )
-                        pbar.update(1)
-                        continue
-                    except Exception as e:
-                        tqdm.write(
-                            f"    ⚠️  Error processing record in {file_path.name}: {e}"
-                        )
-                        pbar.update(1)
-                        continue
+                    except json.JSONDecodeError:
+                        pass
+                    except Exception:
+                        pass
 
         except Exception as e:
             tqdm.write(f"    ⚠️  Error reading {file_path.name}: {e}")
-            continue
 
     pbar.close()
+    if link_rows:
+        insert_automated_user_datasets_batch(conn, link_rows)
 
-    if user_rows or link_rows:
-        insert_automated_users_batch(conn, user_rows, link_rows)
-
-    return total_users, total_links
+    print(f"  ✅ Inserted {total_links:,} AutomatedUserDataset rows")
+    return total_links
 
 
 def main() -> None:
@@ -232,7 +271,8 @@ def main() -> None:
                 conn.commit()
             print("  ✅ Tables truncated")
 
-            user_count, link_count = process_author_files(conn, authors_dir)
+            user_count = step1_insert_automated_users(conn, authors_dir)
+            link_count = step2_insert_automated_user_datasets(conn, authors_dir)
 
             print("\n✅ Automated user database fill completed successfully!")
             print("📊 Summary:")
