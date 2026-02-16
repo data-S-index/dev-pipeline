@@ -19,11 +19,30 @@ def natural_sort_key(path: Path) -> tuple:
     return tuple(int(part) if part.isdigit() else part.lower() for part in parts)
 
 
+def _normalize_single_identifier(raw_id_string: str) -> str:
+    """Normalize ORCID URLs/prefixes to bare identifier (lower, trim); otherwise return as-is.
+    Matches proposal analysis: strip https://orcid.org/ and orcid: prefix, then LOWER(TRIM(...)).
+    """
+    if not raw_id_string or not isinstance(raw_id_string, str):
+        return ""
+    s = raw_id_string.strip()
+    if "orcid.org/" in s:
+        parts = s.split("orcid.org/", 1)
+        s = parts[1] if len(parts) > 1 else s
+    elif s.lower().startswith("orcid:"):
+        parts = s.split("orcid:", 1)
+        s = parts[1] if len(parts) > 1 else s
+    return s.lower().strip()
+
+
 def _normalize_identifiers(identifiers: List[str]) -> tuple:
-    """Normalize nameIdentifiers for comparison: strip, drop empty, sort."""
+    """Normalize nameIdentifiers for comparison: ORCID-normalize, strip, drop empty, sort."""
     if not identifiers:
         return ()
-    cleaned = [s.strip() for s in identifiers if s and isinstance(s, str)]
+    cleaned = [
+        _normalize_single_identifier(s) for s in identifiers if s and isinstance(s, str)
+    ]
+    cleaned = [s for s in cleaned if s]
     return tuple(sorted(cleaned))
 
 
@@ -88,6 +107,13 @@ def collect_unique_authors_with_datasets(
         out = dict(author)
         out["id"] = str(ULID())
         out["datasetIds"] = sorted(dataset_ids)
+        # Store normalized identifiers (bare ORCIDs, etc.) for consistency
+        ids = author.get("nameIdentifiers") or []
+        if ids:
+            normalized = [
+                _normalize_single_identifier(s) for s in ids if s and isinstance(s, str)
+            ]
+            out["nameIdentifiers"] = sorted(s for s in normalized if s)
         result.append(out)
     return result
 
