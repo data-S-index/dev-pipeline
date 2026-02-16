@@ -2,6 +2,7 @@
 
 import json
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 from typing import List
@@ -13,6 +14,8 @@ from config import DATABASE_URL
 
 
 BATCH_SIZE = 10000
+LINK_ROWS_PARALLEL_THRESHOLD = 50_000
+MAX_COPY_WORKERS = 8
 
 
 def natural_sort_key(path: Path) -> tuple:
@@ -26,6 +29,19 @@ def load_ndjson_files(directory: Path) -> List[Path]:
     """Load and sort ndjson files from directory."""
     files = list(directory.glob("*.ndjson"))
     return sorted(files, key=natural_sort_key)
+
+
+def _copy_link_rows_chunk(link_chunk: List[tuple]) -> None:
+    """Copy a chunk of AutomatedUserDataset rows on a dedicated connection (for parallel writes)."""
+    with psycopg.connect(DATABASE_URL, autocommit=False) as conn:
+        with conn.cursor() as cur:
+            with cur.copy(
+                """COPY "AutomatedUserDataset" ("automatedUserId", "datasetId", created, updated)
+                   FROM STDIN"""
+            ) as copy:
+                for row in link_chunk:
+                    copy.write_row(row)
+        conn.commit()
 
 
 def insert_automated_users_batch(
@@ -43,12 +59,36 @@ def insert_automated_users_batch(
                 for row in user_rows:
                     copy.write_row(row)
         if link_rows:
-            with cur.copy(
-                """COPY "AutomatedUserDataset" ("automatedUserId", "datasetId", created, updated)
-                   FROM STDIN"""
-            ) as copy:
-                for row in link_rows:
-                    copy.write_row(row)
+            n = len(link_rows)
+            if n >= LINK_ROWS_PARALLEL_THRESHOLD:
+                workers = min(MAX_COPY_WORKERS, max(1, n // 10_000))
+                chunk_size = (n + workers - 1) // workers
+                chunks = [
+                    link_rows[i : i + chunk_size] for i in range(0, n, chunk_size)
+                ]
+                with ThreadPoolExecutor(max_workers=workers) as executor:
+                    futures = [
+                        executor.submit(_copy_link_rows_chunk, c) for c in chunks
+                    ]
+                    for _ in tqdm(
+                        as_completed(futures),
+                        total=len(futures),
+                        desc="  COPY link rows (parallel)",
+                        unit="chunk",
+                    ):
+                        pass
+            else:
+                with cur.copy(
+                    """COPY "AutomatedUserDataset" ("automatedUserId", "datasetId", created, updated)
+                       FROM STDIN"""
+                ) as copy:
+                    for row in tqdm(
+                        link_rows,
+                        desc="  COPY link rows",
+                        unit="row",
+                        leave=False,
+                    ):
+                        copy.write_row(row)
         conn.commit()
 
 

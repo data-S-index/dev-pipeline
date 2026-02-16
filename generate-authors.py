@@ -134,17 +134,27 @@ def collect_unique_authors_with_datasets(
                 for author in authors:
                     if not isinstance(author, dict):
                         continue
+                    if not (author.get("name") or "").strip():
+                        continue
+                    if (
+                        author.get("nameType") or ""
+                    ).strip().lower() == "organizational":
+                        continue
                     key = author_canonical_key(author)
                     if key not in author_map:
                         author_map[key] = (dict(author), {dataset_id})
                     else:
                         author_map[key][1].add(dataset_id)
 
-    # Build list of authors with datasetIds (sorted for stable output)
+    # Build list of authors with datasetIds (sorted for stable output); drop any with empty name
     result: List[Dict[str, Any]] = []
     for author, dataset_ids in tqdm(
         author_map.values(), desc="Building author list", unit="author"
     ):
+        if not (author.get("name") or "").strip():
+            continue
+        if (author.get("nameType") or "").strip().lower() == "organizational":
+            continue
         out = dict(author)
         out["id"] = str(ULID())
         out["datasetIds"] = sorted(dataset_ids)
