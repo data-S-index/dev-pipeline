@@ -46,25 +46,64 @@ def _normalize_identifiers(identifiers: List[str]) -> tuple:
     return tuple(sorted(cleaned))
 
 
+def _is_orcid(normalized_id: str) -> bool:
+    """Return True if normalized_id looks like an ORCID (4-4-4-4 hex, last group can end in x)."""
+    if not normalized_id or len(normalized_id) != 19:
+        return False
+    # 0000-0000-0000-0000 or 0000-0000-0000-000x
+    parts = normalized_id.split("-")
+    if len(parts) != 4:
+        return False
+    for i, part in enumerate(parts):
+        if len(part) != 4:
+            return False
+        allowed = "0123456789abcdef" if i < 3 else "0123456789abcdefx"
+        if any(c not in allowed for c in part.lower()):
+            return False
+    return True
+
+
+def _canonical_identifier(normalized_identifiers: tuple) -> str:
+    """Pick one canonical ID for deduplication: ORCID if present, else first in list."""
+    if not normalized_identifiers:
+        return ""
+    for nid in normalized_identifiers:
+        if _is_orcid(nid):
+            return nid
+    return normalized_identifiers[0]
+
+
+def _strip_affiliation_parens(s: str) -> str:
+    """Remove matching () at start and end of affiliation string."""
+    s = s.strip()
+    while s.startswith("(") and s.endswith(")"):
+        s = s[1:-1].strip()
+    return s
+
+
 def _normalize_affiliations(affiliations: List[str]) -> tuple:
-    """Normalize affiliation list for comparison: strip, drop empty, sort."""
+    """Normalize affiliation list for comparison: strip, drop outer parens, drop empty, sort."""
     if not affiliations:
         return ()
-    cleaned = [s.strip() for s in affiliations if s and isinstance(s, str)]
+    cleaned = [
+        _strip_affiliation_parens(s) for s in affiliations if s and isinstance(s, str)
+    ]
     return tuple(sorted(cleaned))
 
 
 def author_canonical_key(author: Dict[str, Any]) -> tuple:
     """Canonical key for deduplication.
-    1. If author has identifiers: group only by normalized identifier set (same identifier = same person).
+    1. If author has identifiers: group by a single canonical ID (ORCID if present, else first).
     2. Else (no identifiers): group by name, then split by affiliation (same name + same affiliation = same person).
     """
     if identifiers := _normalize_identifiers(author.get("nameIdentifiers", []) or []):
-        return ("by_identifier", identifiers)
+        return ("by_identifier", _canonical_identifier(identifiers))
     name_type = author.get("nameType", "")
     name = (author.get("name") or "").lower()
     affiliations = _normalize_affiliations(author.get("affiliations", []) or [])
-    return ("by_name_affiliation", name_type, name, affiliations)
+    # Case-insensitive affiliation match for deduplication
+    affiliations_key = tuple(s.lower() for s in affiliations)
+    return ("by_name_affiliation", name_type, name, affiliations_key)
 
 
 def collect_unique_authors_with_datasets(
@@ -109,6 +148,10 @@ def collect_unique_authors_with_datasets(
         out = dict(author)
         out["id"] = str(ULID())
         out["datasetIds"] = sorted(dataset_ids)
+        # Store normalized affiliations (strip outer parens, sort) for consistency
+        out["affiliations"] = list(
+            _normalize_affiliations(author.get("affiliations", []) or [])
+        )
         # Store normalized identifiers (bare ORCIDs, etc.) for consistency
         ids = author.get("nameIdentifiers") or []
         if ids:
