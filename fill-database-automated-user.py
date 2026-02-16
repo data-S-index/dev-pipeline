@@ -75,23 +75,14 @@ def _count_records(ndjson_files: List[Path]) -> int:
 
 
 def _count_link_rows(ndjson_files: List[Path]) -> int:
-    """Count total AutomatedUserDataset rows (sum of datasetIds lengths across all author records)."""
+    """Count total lines (link rows) across AutomatedUserDataset ndjson files."""
     total = 0
     for file_path in tqdm(ndjson_files, desc="  Counting", unit="file", leave=False):
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 for line in f:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    try:
-                        record = json.loads(line)
-                        if record.get("id"):
-                            dataset_ids = record.get("datasetIds") or []
-                            if isinstance(dataset_ids, list):
-                                total += len(dataset_ids)
-                    except json.JSONDecodeError:
-                        continue
+                    if line.strip():
+                        total += 1
         except Exception:
             continue
     return total
@@ -126,9 +117,17 @@ def step1_insert_automated_users(conn: psycopg.Connection, authors_dir: Path) ->
                     try:
                         record = json.loads(line)
                         user_id = record.get("id")
-                        if not user_id:
+                        if user_id is None:
                             tqdm.write(
                                 f"    ⚠️  Skipping record without id in {file_path.name}"
+                            )
+                            pbar.update(1)
+                            continue
+                        try:
+                            user_id = int(user_id)
+                        except (TypeError, ValueError):
+                            tqdm.write(
+                                f"    ⚠️  Skipping record with non-int id in {file_path.name}"
                             )
                             pbar.update(1)
                             continue
@@ -176,17 +175,25 @@ def step1_insert_automated_users(conn: psycopg.Connection, authors_dir: Path) ->
     if user_rows:
         insert_automated_users_batch(conn, user_rows)
 
+    # Ensure sequence is past max id so future inserts don't conflict
+    with conn.cursor() as cur:
+        cur.execute(
+            '''SELECT setval(pg_get_serial_sequence('"AutomatedUser"', 'id'),
+                            COALESCE((SELECT MAX(id) FROM "AutomatedUser"), 1))'''
+        )
+        conn.commit()
+
     print(f"  ✅ Inserted {total_users:,} AutomatedUser rows")
     return total_users
 
 
 def step2_insert_automated_user_datasets(
-    conn: psycopg.Connection, authors_dir: Path
+    conn: psycopg.Connection, automateduserdataset_dir: Path
 ) -> int:
-    """Step 2: Read author NDJSON and batch-insert all AutomatedUserDataset rows."""
+    """Step 2: Read AutomatedUserDataset NDJSON and batch-insert all link rows."""
     print("\n📦 Step 2: Inserting AutomatedUserDataset...")
 
-    ndjson_files = load_ndjson_files(authors_dir)
+    ndjson_files = load_ndjson_files(automateduserdataset_dir)
     if not ndjson_files:
         return 0
 
@@ -212,17 +219,21 @@ def step2_insert_automated_user_datasets(
 
                     try:
                         record = json.loads(line)
-                        user_id = record.get("id")
-                        if not user_id:
+                        automated_user_id = record.get("automatedUserId")
+                        dataset_id = record.get("datasetId")
+                        if automated_user_id is None or dataset_id is None:
+                            continue
+                        try:
+                            automated_user_id = int(automated_user_id)
+                            dataset_id = int(dataset_id)
+                        except (TypeError, ValueError):
                             continue
 
-                        dataset_ids = record.get("datasetIds") or []
-                        if not isinstance(dataset_ids, list):
-                            dataset_ids = []
-                        for dataset_id in dataset_ids:
-                            link_rows.append((user_id, dataset_id, now, now))
-                            total_links += 1
-                        pbar.update(len(dataset_ids))
+                        link_rows.append(
+                            (automated_user_id, dataset_id, now, now)
+                        )
+                        total_links += 1
+                        pbar.update(1)
 
                         if len(link_rows) >= BATCH_SIZE:
                             insert_automated_user_datasets_batch(conn, link_rows)
@@ -250,13 +261,21 @@ def main() -> None:
 
     home_dir = Path.home()
     downloads_dir = home_dir / "Downloads"
-    authors_dir = downloads_dir / "database" / "authors"
+    database_dir = downloads_dir / "database"
+    authors_dir = database_dir / "authors"
+    automateduserdataset_dir = database_dir / "automateduserdataset"
 
     print(f"Authors directory: {authors_dir}")
+    print(f"AutomatedUserDataset directory: {automateduserdataset_dir}")
 
     if not authors_dir.exists():
         raise FileNotFoundError(
             f"Authors directory not found: {authors_dir}. "
+            "Please run generate-authors.py first."
+        )
+    if not automateduserdataset_dir.exists():
+        raise FileNotFoundError(
+            f"AutomatedUserDataset directory not found: {automateduserdataset_dir}. "
             "Please run generate-authors.py first."
         )
 
@@ -272,7 +291,9 @@ def main() -> None:
             print("  ✅ Tables truncated")
 
             user_count = step1_insert_automated_users(conn, authors_dir)
-            link_count = step2_insert_automated_user_datasets(conn, authors_dir)
+            link_count = step2_insert_automated_user_datasets(
+                conn, automateduserdataset_dir
+            )
 
             print("\n✅ Automated user database fill completed successfully!")
             print("📊 Summary:")

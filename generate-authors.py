@@ -6,10 +6,10 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from tqdm import tqdm
-from ulid import ULID
 
 
 AUTHORS_PER_FILE = 10_000
+LINKS_PER_FILE = 100_000  # (automatedUserId, datasetId) rows per ndjson file
 
 
 def natural_sort_key(path: Path) -> tuple:
@@ -156,7 +156,7 @@ def collect_unique_authors_with_datasets(
         if (author.get("nameType") or "").strip().lower() == "organizational":
             continue
         out = dict(author)
-        out["id"] = str(ULID())
+        out["id"] = len(result) + 1  # int id per schema AutomatedUser.id
         out["datasetIds"] = sorted(dataset_ids)
         # Store normalized affiliations (strip outer parens, sort) for consistency
         out["affiliations"] = list(
@@ -182,7 +182,7 @@ def write_author_batches(
     output_dir.mkdir(parents=True, exist_ok=True)
     file_number = 0
     batch_range = range(0, len(authors), authors_per_file)
-    for i in tqdm(batch_range, desc="Writing batches", unit="batch"):
+    for i in tqdm(batch_range, desc="Writing author batches", unit="batch"):
         batch = authors[i : i + authors_per_file]
         file_number += 1
         file_path = output_dir / f"author-{file_number}.ndjson"
@@ -195,13 +195,56 @@ def write_author_batches(
     return file_number
 
 
+def write_automated_user_dataset_batches(
+    authors: List[Dict[str, Any]],
+    output_dir: Path,
+    links_per_file: int = LINKS_PER_FILE,
+) -> int:
+    """Write (automatedUserId, datasetId) link rows to NDJSON files. Returns file count."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    file_number = 0
+    links_in_current = 0
+    current_file = None
+
+    def flush_file():
+        nonlocal current_file
+        if current_file is not None:
+            current_file.close()
+            current_file = None
+
+    for author in tqdm(
+        authors, desc="Writing AutomatedUserDataset batches", unit="author"
+    ):
+        author_id = author.get("id")
+        if author_id is None:
+            continue
+        dataset_ids = author.get("datasetIds") or []
+        if not dataset_ids:
+            continue
+        for dataset_id in dataset_ids:
+            if links_in_current >= links_per_file or current_file is None:
+                flush_file()
+                file_number += 1
+                file_path = output_dir / f"automateduserdataset-{file_number}.ndjson"
+                current_file = open(file_path, "w", encoding="utf-8")
+                links_in_current = 0
+            row = {"automatedUserId": author_id, "datasetId": dataset_id}
+            current_file.write(json.dumps(row, ensure_ascii=False) + "\n")
+            links_in_current += 1
+
+    flush_file()
+    return file_number
+
+
 def main() -> None:
     """Read format-raw-data output, collect unique authors, write NDJSON batches."""
     print("🚀 Generating unique authors from dataset NDJSON...")
 
     downloads_dir = Path.home() / "Downloads"
-    dataset_dir = downloads_dir / "database" / "dataset"
-    output_dir = downloads_dir / "database" / "authors"
+    database_dir = downloads_dir / "database"
+    dataset_dir = database_dir / "dataset"
+    authors_dir = database_dir / "authors"
+    automateduserdataset_dir = database_dir / "automateduserdataset"
 
     if not dataset_dir.exists():
         raise FileNotFoundError(
@@ -210,18 +253,16 @@ def main() -> None:
         )
 
     print(f"  Input:  {dataset_dir}")
-    print(f"  Output: {output_dir}")
+    print(f"  Output (authors): {authors_dir}")
+    print(f"  Output (AutomatedUserDataset): {automateduserdataset_dir}")
 
-    if output_dir.exists():
-        import shutil
+    import shutil
 
-        shutil.rmtree(output_dir)
-        print("✓ Output directory cleaned")
-    else:
-        print("✓ Output directory not found")
-
-    output_dir.mkdir(parents=True, exist_ok=True)
-    print("✓ Created output directory")
+    for output_dir in (authors_dir, automateduserdataset_dir):
+        if output_dir.exists():
+            shutil.rmtree(output_dir)
+            print(f"✓ Cleaned {output_dir.name}")
+    print("✓ Output directories ready")
 
     unique_authors = collect_unique_authors_with_datasets(dataset_dir)
     print(f"\n  Found {len(unique_authors):,} unique author(s)")
@@ -230,14 +271,22 @@ def main() -> None:
         print("  No authors to write.")
         return
 
-    unique_authors.sort(
-        key=lambda a: (a.get("name", "").lower(), a.get("nameType", ""))
+    author_file_count = write_author_batches(
+        unique_authors, authors_dir, AUTHORS_PER_FILE
     )
-    print("  Sorted by name")
+    print(
+        f"  Wrote {author_file_count} author file(s) (~{AUTHORS_PER_FILE:,} authors per file)"
+    )
 
-    file_count = write_author_batches(unique_authors, output_dir, AUTHORS_PER_FILE)
-    print(f"  Wrote {file_count} file(s) (~{AUTHORS_PER_FILE:,} authors per file)")
-    print(f"🎉 Author NDJSON files: {output_dir}")
+    link_file_count = write_automated_user_dataset_batches(
+        unique_authors, automateduserdataset_dir, LINKS_PER_FILE
+    )
+    print(
+        f"  Wrote {link_file_count} AutomatedUserDataset file(s) (~{LINKS_PER_FILE:,} links per file)"
+    )
+
+    print(f"🎉 Author NDJSON: {authors_dir}")
+    print(f"🎉 AutomatedUserDataset NDJSON: {automateduserdataset_dir}")
 
 
 if __name__ == "__main__":

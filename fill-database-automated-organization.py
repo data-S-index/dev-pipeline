@@ -12,7 +12,7 @@ from tqdm import tqdm
 from config import DATABASE_URL
 
 
-BATCH_SIZE = 1000
+BATCH_SIZE = 10000
 
 
 def natural_sort_key(path: Path) -> tuple:
@@ -29,73 +29,83 @@ def load_ndjson_files(directory: Path) -> List[Path]:
 
 
 def insert_automated_organizations_batch(
-    conn: psycopg.Connection,
-    org_rows: List[tuple],
-    link_rows: List[tuple],
+    conn: psycopg.Connection, org_rows: List[tuple]
 ) -> None:
-    """Insert a batch of AutomatedOrganization and AutomatedOrganizationDataset rows using COPY."""
+    """Insert a batch of AutomatedOrganization rows using COPY."""
+    if not org_rows:
+        return
     with conn.cursor() as cur:
-        if org_rows:
-            with cur.copy(
-                """COPY "AutomatedOrganization" (id, name)
-                   FROM STDIN"""
-            ) as copy:
-                for row in org_rows:
-                    copy.write_row(row)
-        if link_rows:
-            total_links = len(link_rows)
-            with tqdm(
-                total=total_links,
-                desc="  Copying link rows",
-                unit="link",
-                unit_scale=True,
-                leave=False,
-            ) as link_pbar:
-                with cur.copy(
-                    """COPY "AutomatedOrganizationDataset" ("automatedOrganizationId", "datasetId", created, updated)
-                       FROM STDIN"""
-                ) as copy:
-                    for start in range(0, total_links, BATCH_SIZE):
-                        batch = link_rows[start : start + BATCH_SIZE]
-                        for row in batch:
-                            copy.write_row(row)
-                        link_pbar.update(len(batch))
-        conn.commit()
+        with cur.copy(
+            """COPY "AutomatedOrganization" (id, name)
+               FROM STDIN"""
+        ) as copy:
+            for row in org_rows:
+                copy.write_row(row)
+    conn.commit()
 
 
-def process_organization_files(
-    conn: psycopg.Connection, organizations_dir: Path
-) -> tuple[int, int]:
-    """Process organization NDJSON files and insert AutomatedOrganization and AutomatedOrganizationDataset."""
-    print("📦 Processing automated organization files...")
+def insert_automated_organization_datasets_batch(
+    conn: psycopg.Connection, link_rows: List[tuple]
+) -> None:
+    """Insert a batch of AutomatedOrganizationDataset rows using COPY."""
+    if not link_rows:
+        return
+    with conn.cursor() as cur:
+        with cur.copy(
+            """COPY "AutomatedOrganizationDataset" ("automatedOrganizationId", "datasetId", created, updated)
+               FROM STDIN"""
+        ) as copy:
+            for row in link_rows:
+                copy.write_row(row)
+    conn.commit()
 
-    ndjson_files = load_ndjson_files(organizations_dir)
-    if not ndjson_files:
-        print("  ⚠️  No ndjson files found")
-        return 0, 0
 
-    print(f"  Found {len(ndjson_files)} ndjson file(s)")
-
-    total_records = 0
+def _count_records(ndjson_files: List[Path]) -> int:
+    """Count total non-empty lines across ndjson files."""
+    total = 0
     for file_path in tqdm(ndjson_files, desc="  Counting", unit="file", leave=False):
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 for line in f:
                     if line.strip():
-                        total_records += 1
+                        total += 1
         except Exception:
             continue
+    return total
 
+
+def _count_link_rows(ndjson_files: List[Path]) -> int:
+    """Count total lines (link rows) across AutomatedOrganizationDataset ndjson files."""
+    total = 0
+    for file_path in tqdm(ndjson_files, desc="  Counting", unit="file", leave=False):
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.strip():
+                        total += 1
+        except Exception:
+            continue
+    return total
+
+
+def step1_insert_automated_organizations(
+    conn: psycopg.Connection, organizations_dir: Path
+) -> int:
+    """Step 1: Read organization NDJSON and batch-insert all AutomatedOrganization rows."""
+    print("📦 Step 1: Inserting AutomatedOrganization...")
+
+    ndjson_files = load_ndjson_files(organizations_dir)
+    if not ndjson_files:
+        print("  ⚠️  No ndjson files found")
+        return 0
+
+    total_records = _count_records(ndjson_files)
     print(f"  Processing {total_records:,} organization records...")
 
     org_rows: List[tuple] = []
-    link_rows: List[tuple] = []
     total_orgs = 0
-    total_links = 0
-    now = datetime.now()
-
     pbar = tqdm(
-        total=total_records, desc="  Processing", unit="record", unit_scale=True
+        total=total_records, desc="  AutomatedOrganization", unit="record", unit_scale=True
     )
 
     for file_path in ndjson_files:
@@ -108,59 +118,127 @@ def process_organization_files(
 
                     try:
                         record = json.loads(line)
-
                         org_id = record.get("id")
-                        if not org_id:
+                        if org_id is None:
                             tqdm.write(
                                 f"    ⚠️  Skipping record without id in {file_path.name}"
                             )
                             pbar.update(1)
                             continue
+                        try:
+                            org_id = int(org_id)
+                        except (TypeError, ValueError):
+                            tqdm.write(
+                                f"    ⚠️  Skipping record with non-int id in {file_path.name}"
+                            )
+                            pbar.update(1)
+                            continue
 
                         name = record.get("name") or ""
-
                         org_rows.append((org_id, name))
                         total_orgs += 1
-
-                        dataset_ids = record.get("datasetIds") or []
-                        if not isinstance(dataset_ids, list):
-                            dataset_ids = []
-                        for dataset_id in dataset_ids:
-                            link_rows.append((org_id, dataset_id, now, now))
-                            total_links += 1
-
                         pbar.update(1)
 
                         if len(org_rows) >= BATCH_SIZE:
-                            insert_automated_organizations_batch(
-                                conn, org_rows, link_rows
-                            )
+                            insert_automated_organizations_batch(conn, org_rows)
                             org_rows = []
-                            link_rows = []
 
                     except json.JSONDecodeError as e:
                         tqdm.write(
                             f"    ⚠️  Error parsing line in {file_path.name}: {e}"
                         )
                         pbar.update(1)
-                        continue
                     except Exception as e:
                         tqdm.write(
                             f"    ⚠️  Error processing record in {file_path.name}: {e}"
                         )
                         pbar.update(1)
-                        continue
 
         except Exception as e:
             tqdm.write(f"    ⚠️  Error reading {file_path.name}: {e}")
-            continue
 
     pbar.close()
+    if org_rows:
+        insert_automated_organizations_batch(conn, org_rows)
 
-    if org_rows or link_rows:
-        insert_automated_organizations_batch(conn, org_rows, link_rows)
+    # Ensure sequence is past max id so future inserts don't conflict
+    with conn.cursor() as cur:
+        cur.execute(
+            """SELECT setval(pg_get_serial_sequence('"AutomatedOrganization"', 'id'),
+                            COALESCE((SELECT MAX(id) FROM "AutomatedOrganization"), 1))"""
+        )
+        conn.commit()
 
-    return total_orgs, total_links
+    print(f"  ✅ Inserted {total_orgs:,} AutomatedOrganization rows")
+    return total_orgs
+
+
+def step2_insert_automated_organization_datasets(
+    conn: psycopg.Connection, automatedorganizationdataset_dir: Path
+) -> int:
+    """Step 2: Read AutomatedOrganizationDataset NDJSON and batch-insert all link rows."""
+    print("\n📦 Step 2: Inserting AutomatedOrganizationDataset...")
+
+    ndjson_files = load_ndjson_files(automatedorganizationdataset_dir)
+    if not ndjson_files:
+        return 0
+
+    total_links_to_insert = _count_link_rows(ndjson_files)
+    print(f"  Processing {total_links_to_insert:,} organization-dataset link rows...")
+    link_rows: List[tuple] = []
+    total_links = 0
+    now = datetime.now()
+    pbar = tqdm(
+        total=total_links_to_insert,
+        desc="  AutomatedOrganizationDataset",
+        unit="link",
+        unit_scale=True,
+    )
+
+    for file_path in ndjson_files:
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    try:
+                        record = json.loads(line)
+                        org_id = record.get("automatedOrganizationId")
+                        dataset_id = record.get("datasetId")
+                        if org_id is None or dataset_id is None:
+                            continue
+                        try:
+                            org_id = int(org_id)
+                            dataset_id = int(dataset_id)
+                        except (TypeError, ValueError):
+                            continue
+
+                        link_rows.append((org_id, dataset_id, now, now))
+                        total_links += 1
+                        pbar.update(1)
+
+                        if len(link_rows) >= BATCH_SIZE:
+                            insert_automated_organization_datasets_batch(
+                                conn, link_rows
+                            )
+                            link_rows = []
+
+                    except json.JSONDecodeError:
+                        pass
+                    except Exception:
+                        pass
+
+        except Exception as e:
+            tqdm.write(f"    ⚠️  Error reading {file_path.name}: {e}")
+
+    pbar.close()
+    if link_rows:
+        insert_automated_organization_datasets_batch(conn, link_rows)
+
+    print(f"  ✅ Inserted {total_links:,} AutomatedOrganizationDataset rows")
+    return total_links
 
 
 def main() -> None:
@@ -169,13 +247,21 @@ def main() -> None:
 
     home_dir = Path.home()
     downloads_dir = home_dir / "Downloads"
-    organizations_dir = downloads_dir / "database" / "organizations"
+    database_dir = downloads_dir / "database"
+    organizations_dir = database_dir / "organizations"
+    automatedorganizationdataset_dir = database_dir / "automatedorganizationdataset"
 
     print(f"Organizations directory: {organizations_dir}")
+    print(f"AutomatedOrganizationDataset directory: {automatedorganizationdataset_dir}")
 
     if not organizations_dir.exists():
         raise FileNotFoundError(
             f"Organizations directory not found: {organizations_dir}. "
+            "Please run generate-organizations.py first."
+        )
+    if not automatedorganizationdataset_dir.exists():
+        raise FileNotFoundError(
+            f"AutomatedOrganizationDataset directory not found: {automatedorganizationdataset_dir}. "
             "Please run generate-organizations.py first."
         )
 
@@ -190,7 +276,12 @@ def main() -> None:
                 conn.commit()
             print("  ✅ Tables truncated")
 
-            org_count, link_count = process_organization_files(conn, organizations_dir)
+            org_count = step1_insert_automated_organizations(
+                conn, organizations_dir
+            )
+            link_count = step2_insert_automated_organization_datasets(
+                conn, automatedorganizationdataset_dir
+            )
 
             print("\n✅ Automated organization database fill completed successfully!")
             print("📊 Summary:")

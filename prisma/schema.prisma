@@ -52,7 +52,7 @@ model UserDataset {
 }
 
 model AutomatedUser {
-    id String @id @default(ulid())
+    id Int @id @default(autoincrement())
 
     nameType        String?
     name            String   @default("")
@@ -65,7 +65,7 @@ model AutomatedUser {
 
 model AutomatedUserDataset {
     automatedUser   AutomatedUser @relation(fields: [automatedUserId], references: [id], onDelete: Cascade)
-    automatedUserId String
+    automatedUserId Int
 
     dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
     datasetId Int
@@ -74,12 +74,10 @@ model AutomatedUserDataset {
     updated DateTime @updatedAt
 
     @@id([automatedUserId, datasetId])
-    @@index([automatedUserId])
-    @@index([datasetId])
 }
 
 model AutomatedOrganization {
-    id String @id @default(ulid())
+    id Int @id @default(autoincrement())
 
     name String @default("")
 
@@ -89,7 +87,7 @@ model AutomatedOrganization {
 
 model AutomatedOrganizationDataset {
     automatedOrganization   AutomatedOrganization @relation(fields: [automatedOrganizationId], references: [id], onDelete: Cascade)
-    automatedOrganizationId String
+    automatedOrganizationId Int
 
     dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
     datasetId Int
@@ -98,8 +96,6 @@ model AutomatedOrganizationDataset {
     updated DateTime @updatedAt
 
     @@id([automatedOrganizationId, datasetId])
-    @@index([automatedOrganizationId])
-    @@index([datasetId])
 }
 
 model Dataset {
@@ -298,7 +294,7 @@ model AutomatedUserSIndex {
     id BigInt @id @default(autoincrement())
 
     automatedUser   AutomatedUser @relation(fields: [automatedUserId], references: [id], onDelete: Cascade)
-    automatedUserId String
+    automatedUserId Int
 
     score Float
     year  Int // 4 digit year
@@ -312,7 +308,7 @@ model AutomatedOrganizationSIndex {
     id BigInt @id @default(autoincrement())
 
     automatedOrganization   AutomatedOrganization @relation(fields: [automatedOrganizationId], references: [id], onDelete: Cascade)
-    automatedOrganizationId String
+    automatedOrganizationId Int
 
     score Float
     year  Int // 4 digit year
