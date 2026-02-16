@@ -103,7 +103,9 @@ def collect_unique_authors_with_datasets(
 
     # Build list of authors with datasetIds (sorted for stable output)
     result: List[Dict[str, Any]] = []
-    for author, dataset_ids in author_map.values():
+    for author, dataset_ids in tqdm(
+        author_map.values(), desc="Building author list", unit="author"
+    ):
         out = dict(author)
         out["id"] = str(ULID())
         out["datasetIds"] = sorted(dataset_ids)
@@ -126,12 +128,15 @@ def write_author_batches(
     """Write authors to NDJSON files with at most authors_per_file per file. Returns file count."""
     output_dir.mkdir(parents=True, exist_ok=True)
     file_number = 0
-    for i in range(0, len(authors), authors_per_file):
+    batch_range = range(0, len(authors), authors_per_file)
+    for i in tqdm(batch_range, desc="Writing batches", unit="batch"):
         batch = authors[i : i + authors_per_file]
         file_number += 1
         file_path = output_dir / f"author-{file_number}.ndjson"
         with open(file_path, "w", encoding="utf-8") as f:
-            for author in batch:
+            for author in tqdm(
+                batch, desc=f"Batch {file_number}", unit="author", leave=False
+            ):
                 out = dict(author)
                 f.write(json.dumps(out, ensure_ascii=False) + "\n")
     return file_number
