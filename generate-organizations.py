@@ -3,7 +3,7 @@
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 from tqdm import tqdm
 
@@ -19,16 +19,36 @@ def natural_sort_key(path: Path) -> tuple:
     return tuple(int(part) if part.isdigit() else part.lower() for part in parts)
 
 
+def _strip_affiliation_parens(s: str) -> str:
+    """Remove matching () at start and end of affiliation string."""
+    s = s.strip()
+    while s.startswith("(") and s.endswith(")"):
+        s = s[1:-1].strip()
+    return s
+
+
+def _normalize_org_name(affiliation: str) -> str:
+    """Normalize organization name for deduplication: strip, remove outer parens, strip inner (..), lower."""
+    s = _strip_affiliation_parens(affiliation.strip())
+    s = re.sub(r"\(.*?\)", "", s).strip()
+    return s.lower()
+
+
+def organization_canonical_key(display_name: str) -> tuple:
+    """Canonical key for deduplication: group by normalized name."""
+    return ("by_name", _normalize_org_name(display_name))
+
+
 def collect_unique_organizations_with_datasets(
     dataset_dir: Path,
-) -> List[Dict[str, Any]]:
-    """Read all dataset NDJSON files; return unique organizations (by name) with their dataset IDs."""
+) -> Tuple[List[Dict[str, Any]], List[Tuple[int, int]]]:
+    """Read all dataset NDJSON files; return unique organizations and (automatedOrganizationId, datasetId) links."""
     ndjson_files = sorted(dataset_dir.glob("*.ndjson"), key=natural_sort_key)
     if not ndjson_files:
-        return []
+        return [], []
 
-    # lowercased name -> (display name from first occurrence, set of dataset ids)
-    organization_map: Dict[str, tuple] = {}
+    # canonical_key -> (display name from first occurrence, set of dataset ids)
+    organization_map: Dict[tuple, tuple] = {}
 
     for file_path in tqdm(ndjson_files, desc="Scanning dataset files", unit="file"):
         with open(file_path, "r", encoding="utf-8") as f:
@@ -47,35 +67,35 @@ def collect_unique_organizations_with_datasets(
                 for author in authors:
                     if not isinstance(author, dict):
                         continue
-                    affiliations = author.get("affiliations")
-                    if not affiliations or not isinstance(affiliations, list):
+                    affiliations = author.get("affiliations") or []
+                    if not isinstance(affiliations, list):
                         continue
                     for aff in affiliations:
                         if not isinstance(aff, str):
                             continue
-                        name = aff.strip()
-                        # if name is between parentheses, remove the parentheses
-                        name = re.sub(r"\(.*\)", "", name)
-                        name = name.strip()
+                        name = _strip_affiliation_parens(aff.strip())
                         if not name:
                             continue
-                        key = name.lower()
+                        key = organization_canonical_key(name)
                         if key not in organization_map:
-                            organization_map[key] = (name, set())
-                        organization_map[key][1].add(dataset_id)
+                            organization_map[key] = (name, {dataset_id})
+                        else:
+                            organization_map[key][1].add(dataset_id)
 
+    # Build organization list (no datasetIds) and links list
     result: List[Dict[str, Any]] = []
-    for idx, (display_name, dataset_ids) in enumerate(
-        organization_map.values(), start=1
+    links: List[Tuple[int, int]] = []
+    for display_name, dataset_ids in tqdm(
+        organization_map.values(),
+        desc="Building organization list",
+        unit="organization",
     ):
-        result.append(
-            {
-                "id": idx,  # int id per schema AutomatedOrganization.id
-                "name": display_name,
-                "datasetIds": sorted(dataset_ids),
-            }
-        )
-    return result
+        org_id = len(result) + 1  # int id per schema AutomatedOrganization.id
+        out = {"id": org_id, "name": display_name}
+        result.append(out)
+        for did in sorted(dataset_ids):
+            links.append((org_id, did))
+    return result, links
 
 
 def write_organization_batches(
@@ -86,22 +106,22 @@ def write_organization_batches(
     """Write organizations to NDJSON files with at most organizations_per_file per file. Returns file count."""
     output_dir.mkdir(parents=True, exist_ok=True)
     file_number = 0
-    for i in tqdm(
-        range(0, len(organizations), organizations_per_file),
-        desc="Writing organization batches",
-        unit="batch",
-    ):
+    batch_range = range(0, len(organizations), organizations_per_file)
+    for i in tqdm(batch_range, desc="Writing organization batches", unit="batch"):
         batch = organizations[i : i + organizations_per_file]
         file_number += 1
         file_path = output_dir / f"organization-{file_number}.ndjson"
         with open(file_path, "w", encoding="utf-8") as f:
-            for org in batch:
-                f.write(json.dumps(org, ensure_ascii=False) + "\n")
+            for org in tqdm(
+                batch, desc=f"Batch {file_number}", unit="organization", leave=False
+            ):
+                out = dict(org)
+                f.write(json.dumps(out, ensure_ascii=False) + "\n")
     return file_number
 
 
 def write_automated_organization_dataset_batches(
-    organizations: List[Dict[str, Any]],
+    links: List[Tuple[int, int]],
     output_dir: Path,
     links_per_file: int = LINKS_PER_FILE,
 ) -> int:
@@ -117,36 +137,29 @@ def write_automated_organization_dataset_batches(
             current_file.close()
             current_file = None
 
-    for org in tqdm(
-        organizations,
+    for org_id, dataset_id in tqdm(
+        links,
         desc="Writing AutomatedOrganizationDataset batches",
-        unit="organization",
+        unit="link",
     ):
-        org_id = org.get("id")
-        if org_id is None:
-            continue
-        dataset_ids = org.get("datasetIds") or []
-        if not dataset_ids:
-            continue
-        for dataset_id in dataset_ids:
-            if links_in_current >= links_per_file or current_file is None:
-                flush_file()
-                file_number += 1
-                file_path = (
-                    output_dir / f"automatedorganizationdataset-{file_number}.ndjson"
-                )
-                current_file = open(file_path, "w", encoding="utf-8")
-                links_in_current = 0
-            row = {"automatedOrganizationId": org_id, "datasetId": dataset_id}
-            current_file.write(json.dumps(row, ensure_ascii=False) + "\n")
-            links_in_current += 1
+        if links_in_current >= links_per_file or current_file is None:
+            flush_file()
+            file_number += 1
+            file_path = (
+                output_dir / f"automatedorganizationdataset-{file_number}.ndjson"
+            )
+            current_file = open(file_path, "w", encoding="utf-8")
+            links_in_current = 0
+        row = {"automatedOrganizationId": org_id, "datasetId": dataset_id}
+        current_file.write(json.dumps(row, ensure_ascii=False) + "\n")
+        links_in_current += 1
 
     flush_file()
     return file_number
 
 
 def main() -> None:
-    """Read format-raw-data output, collect unique organizations by name, write NDJSON batches."""
+    """Read format-raw-data output, collect unique organizations, write NDJSON batches."""
     print("🚀 Generating unique organizations from dataset NDJSON...")
 
     downloads_dir = Path.home() / "Downloads"
@@ -175,7 +188,9 @@ def main() -> None:
             print(f"✓ Cleaned {output_dir.name}")
     print("✓ Output directories ready")
 
-    unique_organizations = collect_unique_organizations_with_datasets(dataset_dir)
+    unique_organizations, org_dataset_links = (
+        collect_unique_organizations_with_datasets(dataset_dir)
+    )
     print(f"\n  Found {len(unique_organizations):,} unique organization(s)")
 
     if not unique_organizations:
@@ -186,11 +201,11 @@ def main() -> None:
         unique_organizations, organizations_dir, ORGANIZATIONS_PER_FILE
     )
     print(
-        f"  Wrote {org_file_count} organization file(s) (~{ORGANIZATIONS_PER_FILE:,} per file)"
+        f"  Wrote {org_file_count} organization file(s) (~{ORGANIZATIONS_PER_FILE:,} organizations per file)"
     )
 
     link_file_count = write_automated_organization_dataset_batches(
-        unique_organizations, automatedorganizationdataset_dir, LINKS_PER_FILE
+        org_dataset_links, automatedorganizationdataset_dir, LINKS_PER_FILE
     )
     print(
         f"  Wrote {link_file_count} AutomatedOrganizationDataset file(s) (~{LINKS_PER_FILE:,} links per file)"
