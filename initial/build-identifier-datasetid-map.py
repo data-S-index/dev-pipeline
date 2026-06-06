@@ -7,7 +7,7 @@ from typing import Dict
 
 from tqdm import tqdm
 
-from identifier_mapping import IDENTIFIER_TO_ID_MAP_DIR
+from initial.identifier_mapping import IDENTIFIER_TO_ID_MAP_DIR
 
 # Total record count for progress bar (dataset size)
 TOTAL_RECORDS = 49061167

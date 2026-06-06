@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 from tqdm import tqdm
 
-from identifier_mapping import (
+from initial.identifier_mapping import (
     IDENTIFIER_TO_ID_MAP_DIR,
     load_identifier_to_id_mapping_from_dir,
 )
