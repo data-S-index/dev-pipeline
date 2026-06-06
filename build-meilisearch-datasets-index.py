@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 from config import SEARCH_API_URL, SEARCH_API_KEY
 
-BATCH_SIZE = 200000  # Number of documents to batch before sending
+BATCH_SIZE = 100000  # Number of documents to batch before sending
 DELAY_INTERVAL = 5_000_000  # Delay after every 5 million records
 DELAY_DURATION = 180  # 3 minutes in seconds
 
@@ -93,6 +93,27 @@ def process_ndjson_files(index, dataset_dir: Path) -> int:
                         record_id = record.get("id")
                         authors = record.get("authors", [])
                         author_names = [author.get("name", "") for author in authors]
+                        author_name_identifiers: List[str] = []
+
+                        for author in authors:
+                            if not isinstance(author, dict):
+                                continue
+
+                            name_identifiers = author.get("nameIdentifiers", [])
+                            if isinstance(name_identifiers, list):
+                                author_name_identifiers.extend(
+                                    [
+                                        identifier
+                                        for identifier in name_identifiers
+                                        if isinstance(identifier, str)
+                                        and identifier.strip()
+                                    ]
+                                )
+
+                        # Preserve order while removing duplicates.
+                        author_name_identifiers = list(
+                            dict.fromkeys(author_name_identifiers)
+                        )
                         search_record = {
                             "id": record_id,
                             "identifier": record.get("identifier"),
@@ -100,6 +121,7 @@ def process_ndjson_files(index, dataset_dir: Path) -> int:
                             "publishedAt": record.get("publishedAt"),
                             "subjects": record.get("subjects"),
                             "authors": author_names,
+                            "nameIdentifiers": author_name_identifiers,
                         }
 
                         documents.append(search_record)
