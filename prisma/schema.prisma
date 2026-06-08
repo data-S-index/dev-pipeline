@@ -19,7 +19,9 @@ datasource db {
 model User {
     id String @id @default(ulid())
 
-    username String @unique
+    anonymous Boolean @default(true)
+
+    login    String @unique // email or username(anonymous accounts)
     password String
 
     givenName       String   @default("") // first name
@@ -27,13 +29,40 @@ model User {
     additionalNames String[] @default([])
 
     affiliation     String?
+    orcid           String?
     homePage        String?
     areasOfInterest String[] @default([])
 
     created DateTime @default(now())
     updated DateTime @updatedAt
 
-    userDatasets UserDataset[]
+    admin Boolean @default(false)
+
+    userDatasets           UserDataset[]
+    userEmailVerifications UserEmailVerification[]
+    userForgotPasswords    UserForgotPassword[]
+}
+
+model UserEmailVerification {
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String
+
+    verificationToken String   @unique
+    expiresAt         DateTime
+
+    created DateTime @default(now())
+    updated DateTime @updatedAt
+}
+
+model UserForgotPassword {
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String
+
+    resetToken String   @unique
+    expiresAt  DateTime
+
+    created DateTime @default(now())
+    updated DateTime @updatedAt
 }
 
 model UserDataset {
@@ -290,6 +319,13 @@ model DIndex {
     created DateTime @default(now())
 }
 
+model DIndexJob {
+    datasetId Int @id
+
+    created DateTime @default(now())
+    updated DateTime @default(now()) @updatedAt
+}
+
 model AutomatedUserSIndex {
     id BigInt @id @default(autoincrement())
 
@@ -304,6 +340,13 @@ model AutomatedUserSIndex {
     @@index([automatedUserId])
 }
 
+model AutomatedUserSIndexJob {
+    automatedUserId Int @id
+
+    created DateTime @default(now())
+    updated DateTime @default(now()) @updatedAt
+}
+
 model AutomatedOrganizationSIndex {
     id BigInt @id @default(autoincrement())
 
@@ -316,4 +359,11 @@ model AutomatedOrganizationSIndex {
     created DateTime @default(now())
 
     @@index([automatedOrganizationId])
+}
+
+model AutomatedOrganizationSIndexJob {
+    automatedOrganizationId Int @id
+
+    created DateTime @default(now())
+    updated DateTime @default(now()) @updatedAt
 }
