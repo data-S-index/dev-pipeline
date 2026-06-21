@@ -63,6 +63,20 @@ def clean_subjects(record: Dict[str, Any]) -> List[str]:
     return subjects
 
 
+def extract_pub_year(record: Dict[str, Any]) -> int:
+    """Extract pubYear from record, defaulting to 0 if missing."""
+    raw_pubyear = record.get("pubyear")
+    if raw_pubyear is not None:
+        with contextlib.suppress(ValueError, TypeError):
+            return int(raw_pubyear)
+    return 0
+
+
+def extract_publisher_id(record: Dict[str, Any]) -> str:
+    """Extract publisherId from record, defaulting to 'unknown' if missing."""
+    return clean_string(record.get("publisher_id")) or "unknown"
+
+
 def clean_authors(record: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Clean authors from record."""
     authors = []
@@ -96,8 +110,10 @@ def parse_datacite_record(record: Dict[str, Any], dataset_id: int) -> Dict[str, 
         clean_string(record.get("description")) if record.get("description") else None
     )
     publisher = record.get("publisher") or None
+    publisher_id = extract_publisher_id(record)
     version = record.get("version") or None
     published_at = parse_publication_date(record)
+    pub_year = extract_pub_year(record)
 
     # Clean subjects
     subjects = clean_subjects(record)
@@ -148,7 +164,9 @@ def parse_datacite_record(record: Dict[str, Any], dataset_id: int) -> Dict[str, 
         "description": description,
         "version": version,
         "publisher": publisher,
+        "publisherId": publisher_id,
         "publishedAt": published_at.isoformat() if published_at else None,
+        "pubYear": pub_year,
         "subjects": subjects,
         "authors": authors,
     }
@@ -162,8 +180,10 @@ def parse_emdb_record(record: Dict[str, Any], dataset_id: int) -> Dict[str, Any]
         clean_string(record.get("description")) if record.get("description") else None
     )
     publisher = record.get("publisher") or None
+    publisher_id = extract_publisher_id(record)
     version = record.get("version") or None
     published_at = parse_publication_date(record)
+    pub_year = extract_pub_year(record)
 
     # Clean subjects
     subjects = clean_subjects(record)
@@ -196,7 +216,9 @@ def parse_emdb_record(record: Dict[str, Any], dataset_id: int) -> Dict[str, Any]
         "description": description,
         "version": version,
         "publisher": publisher,
+        "publisherId": publisher_id,
         "publishedAt": published_at.isoformat() if published_at else None,
+        "pubYear": pub_year,
         "subjects": subjects,
         "authors": authors,
     }

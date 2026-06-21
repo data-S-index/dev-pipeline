@@ -2,7 +2,7 @@
 
 For every Dataset, exports one NDJSON record containing everything
 generate-d-index-files.py needs to recompute the d-index from scratch:
-  - id, identifier, identifierType, publishedAt
+  - id, identifier, identifierType, publishedAt, pubYear, publisherId
   - fuji: {score, metricVersion, softwareVersion}            (FujiScore, if present)
   - citations: [{id, citedDate, citationWeight}, ...]        (Citation)
   - mentions: [{id, mentionedDate, mentionWeight}, ...]      (Mention)
@@ -95,7 +95,7 @@ def main() -> None:
 
                 cur.execute(
                     """
-                    SELECT id, identifier, "identifierType", "publishedAt"
+                    SELECT id, identifier, "identifierType", "publishedAt", "pubYear", "publisherId"
                     FROM "Dataset"
                     WHERE id >= %s AND id <= %s
                     ORDER BY id
@@ -230,12 +230,21 @@ def main() -> None:
                         "source": source,
                     }
 
-                for dataset_id, identifier, identifier_type, published_at in datasets_batch:
+                for (
+                    dataset_id,
+                    identifier,
+                    identifier_type,
+                    published_at,
+                    pub_year,
+                    publisher_id,
+                ) in datasets_batch:
                     record = {
                         "id": dataset_id,
                         "identifier": identifier,
                         "identifierType": identifier_type,
                         "publishedAt": published_at,
+                        "pubYear": pub_year,
+                        "publisherId": publisher_id or "unknown",
                         "fuji": fuji_by_dataset.get(dataset_id),
                         "citations": citations_by_dataset.get(dataset_id, []),
                         "mentions": mentions_by_dataset.get(dataset_id, []),
