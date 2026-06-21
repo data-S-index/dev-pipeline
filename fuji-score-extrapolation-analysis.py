@@ -215,15 +215,21 @@ def main() -> None:
         json.dump(sorted_analysis, f, indent=2, ensure_ascii=False)
 
     consistent_count = sum(v["consistent"] for v in analysis.values())
+    inconsistent_count = len(analysis) - consistent_count
     consistent_dataset_total = sum(
         v["totalCount"] or 0 for v in analysis.values() if v["consistent"]
     )
+    inconsistent_dataset_total = sum(
+        v["totalCount"] or 0 for v in analysis.values() if not v["consistent"]
+    )
+    overall_dataset_total = consistent_dataset_total + inconsistent_dataset_total
 
     print("\nDone!")
     print("Summary:")
     print(f"  - Publishers analyzed: {len(analysis):,}")
-    print(f"  - Publishers with a consistent score: {consistent_count:,}")
-    print(f"  - Datasets covered by consistent publishers: {consistent_dataset_total:,}")
+    print(f"  - Datasets analyzed: {overall_dataset_total:,}")
+    print(f"  - Consistent publishers: {consistent_count:,} ({consistent_dataset_total:,} datasets)")
+    print(f"  - Non-consistent publishers: {inconsistent_count:,} ({inconsistent_dataset_total:,} datasets)")
     print(f"Analysis written to: {analysis_path}")
 
 
