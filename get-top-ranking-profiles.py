@@ -21,7 +21,7 @@ ORGS_FILE = OUTPUT_DIR / "top-organizations-by-avg-dataset-index.tsv"
 DATASETS_FILE = OUTPUT_DIR / "top-datasets-by-mentions.tsv"
 
 HEADER = (
-    "id\tname\tnameType\taffiliations\tdataset_count\tsindex\tsindex_year\t"
+    "id\tname\taffiliations\tdataset_count\tsindex\tsindex_year\t"
     "avg_dataset_index\ttotal_citations"
 )
 ORG_HEADER = (
@@ -67,7 +67,6 @@ def run_users(conn: psycopg.Connection) -> list:
     SELECT
         u.id,
         u.name,
-        u."nameType",
         u.affiliations,
         udc.dataset_count,
         us.sindex,
@@ -221,7 +220,6 @@ def write_tsv(
                 (
                     id_,
                     name,
-                    name_type,
                     affiliations,
                     dataset_count,
                     sindex,
@@ -231,7 +229,7 @@ def write_tsv(
                 ) = row
                 aff_str = _format_affiliations(affiliations)
                 line = (
-                    f"{id_}\t{_tsv_escape(name)}\t{name_type or ''}\t{_tsv_escape(aff_str)}\t{dataset_count}\t{sindex}\t{sindex_year}\t"
+                    f"{id_}\t{_tsv_escape(name)}\t{_tsv_escape(aff_str)}\t{dataset_count}\t{sindex}\t{sindex_year}\t"
                     f"{avg_di:.2f}\t{citations}\n"
                 )
             f.write(line)

@@ -1,9 +1,13 @@
 """Compute AutomatedUserSIndex from local NDJSON only (no database).
 
-Reads from ~/Downloads/database/: dindex/, authors/ (AutomatedUser),
-automateduserdataset/. Processes in batches to limit RAM: only one batch
-of user→datasets and dindex data is in memory at a time.
-Writes (automatedUserId, score, year) to ~/Downloads/database/automatedusersindex/.
+Reads from ~/Downloads/pulled-database/:
+  - dindex/ (produced by generate-d-index-files.py)
+  - automated-author/authors/ and automated-author/automateduserdataset/
+    (produced by generate-authors.py)
+Processes in batches to limit RAM: only one batch of user→datasets and
+dindex data is in memory at a time.
+Writes (automatedUserId, score, year) to
+~/Downloads/pulled-database/automatedusersindex/.
 If DATABASE_URL is set, loads the result into the database when done.
 """
 
@@ -259,19 +263,29 @@ def load_sindex_into_db(output_dir: Path) -> int:
 
 
 def main() -> None:
-    database_dir = Path.home() / "Downloads" / "database"
-    dindex_dir = database_dir / "dindex"
-    authors_dir = database_dir / "authors"
-    automateduserdataset_dir = database_dir / "automateduserdataset"
-    output_dir = database_dir / "automatedusersindex"
+    home_dir = Path.home()
+    downloads_dir = home_dir / "Downloads"
+    dindex_dir = downloads_dir / "pulled-database" / "dindex"
+    automated_author_dir = downloads_dir / "pulled-database" / "automated-author"
+    authors_dir = automated_author_dir / "authors"
+    automateduserdataset_dir = automated_author_dir / "automateduserdataset"
+    output_dir = downloads_dir / "pulled-database" / "automatedusersindex"
 
-    for d, name in [
-        (dindex_dir, "dindex"),
-        (authors_dir, "authors"),
-        (automateduserdataset_dir, "automateduserdataset"),
-    ]:
-        if not d.exists():
-            raise FileNotFoundError(f"Directory not found: {d} ({name})")
+    print(f"Dindex directory: {dindex_dir}")
+    print(f"Authors directory: {authors_dir}")
+    print(f"AutomatedUserDataset directory: {automateduserdataset_dir}")
+    print(f"Output directory: {output_dir}")
+
+    if not dindex_dir.exists():
+        raise FileNotFoundError(
+            f"Dindex directory not found: {dindex_dir}. "
+            "Please run generate-d-index-files.py first."
+        )
+    if not authors_dir.exists() or not automateduserdataset_dir.exists():
+        raise FileNotFoundError(
+            f"Authors/AutomatedUserDataset directory not found under {automated_author_dir}. "
+            "Please run generate-authors.py first."
+        )
 
     if output_dir.exists():
         import shutil

@@ -15,6 +15,7 @@ tqdm
 cuid2
 meilisearch
 python-ulid
+orjson
 
 # Environment
 python-dotenv
